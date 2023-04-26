@@ -66,9 +66,10 @@ void set_outside_owner_start(int player, Hands *hands, int i, int j);
 void set_possible_owner_pick(int player, Hands *hands, int i, int j);
 void clear_owner_pass(int player, Hands *hands, int i, int j);
 void clear_owner_play(int player, Hands *hands, int i, int j);
-void destroy_boneyard(Hands *hands);
-void collapse_hand(int player, Hands *hands);
-void emit_collapse(int player, Hands *hands);
+void collapse_hand_evaporate(int player, Hands *hands);
+void collapse_hand_solidify(int player, Hands *hands);
+void cascade_collapse(int player, Hands *hands);
+void emit_collapse(Hands *hands);
 
 // Weight queries
 int solid_weight(Hands *hands, int player);
