@@ -29,10 +29,10 @@ void start(){
             play_move(g, moves[0]);
             continue;
         }
-        printf("give move type (left = %d, right = %d", LEFT, RIGHT);
         if(!cant_pass)
-            printf(", perfect pick = %d, imperfect pick = %d, pass = %d", PERFECT_PICK, IMPERFECT_PICK, PASS);
-        printf("): ");
+            printf("give move type (left = %d, right = %d, perfect pick = %d, imperfect pick = %d, pass = %d): ", LEFT, RIGHT, PERFECT_PICK, IMPERFECT_PICK, PASS);
+        else
+            printf("give move type (left = %d, right = %d): ", LEFT, RIGHT);
         scanf("%d", &move.type);
         switch(move.type){
         case LEFT:
@@ -67,13 +67,14 @@ void start(){
                 printf("invalid move\n");
             break;
         case PASS:
-            if(!cant_pass){
+            if(cant_pass){
                 printf("invalid move\n");
                 break;
             }
             pass(g);
             break;
         default: // play AI move
+            printf("give depth : ");
             scanf("%d", &depth);
             move = best_move(g, depth);
             printf("play the move? : ");

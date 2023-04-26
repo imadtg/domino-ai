@@ -87,13 +87,26 @@ void get_moves(Game *g, Move moves[MAX], int *n, int *cant_pass){
             }
         }
     }
+    /*if(*cant_pass) return;
+    int c = 0;
+    for(int i = 0; i < PIPS; i++){
+        for(int j = 0; j <= i; j++){
+            if(possible_possession(g->turn, &g->hands, i, j) && !playable_domino(&g->snake, i, j))
+                c++;
+            if(c >= g->hands.hand_sizes[g->turn])
+                return;
+        }
+    }
+    *cant_pass = 1;*/
 }
 
 float pass_probability(Game *g, int n){// n is the number of distinct playable dominoes by the player
+    if(n <= 0)
+        return 1.0f;
     int k = g->hands.hand_sizes[g->turn] - g->hands.solid_hand_sizes[g->turn];
     int m = g->hands.liquid_hand_sizes[g->turn] - n;
     if(k > m)
-        return 0;
+        return 0.0f;
     return (float) (FACTORIAL[m] * FACTORIAL[m + n - k]) / (FACTORIAL[m - k] * FACTORIAL[m + n]);
 }
 
@@ -103,6 +116,7 @@ void play_move(Game *g, Move move){
     //clear_owner(g->hands, move.play.left, move.play.right);
     clear_owner_play(g->turn, &g->hands, move.play.left, move.play.right);
     g->hands.hand_sizes[g->turn]--;
+    emit_collapse(&g->hands);
     g->turn = (g->turn + 1) % NP;
     g->pass_counter = 0;
 }
@@ -120,16 +134,16 @@ void absent(Game *g){ // used in passes and imperfect picks
     int right = g->snake.head->domino.right;
     if(left == right){
         for(int i = 0; i < PIPS; i++){
-            printf("clearing %d %d\n", i, left);
+            //printf("clearing %d %d\n", i, left);
             clear_owner_pass(g->turn, &g->hands, i, left);
-            print_hand(&g->hands, g->turn);
+            //print_hand(&g->hands, g->turn);
         }
     } else {
         for(int i = 0; i < PIPS; i++){
-            printf("clearing %d %d and %d %d\n", i, left, right, i);
+            //printf("clearing %d %d and %d %d\n", i, left, right, i);
             clear_owner_pass(g->turn, &g->hands, i, left);
             clear_owner_pass(g->turn, &g->hands, i, right);
-            print_hand(&g->hands, g->turn);
+            //print_hand(&g->hands, g->turn);
         }
     }
 }
@@ -147,9 +161,9 @@ void unabsent(Game *g){ // this isn't the inverse of the function above, only us
     for(int i = 0; i < PIPS; i++){
         for(int j = 0; j <= i; j++){
             if(i != more && j != less && j != more && possible_possession(NP, &g->hands, i, j)){
-                printf("setting %d %d\n", i, j);
+                //printf("setting %d %d\n", i, j);
                 set_possible_owner_pick(g->turn, &g->hands, i, j);
-                print_hand(&g->hands, g->turn);
+                //print_hand(&g->hands, g->turn);
             }
         }
     }
@@ -157,6 +171,7 @@ void unabsent(Game *g){ // this isn't the inverse of the function above, only us
 
 void pass(Game *g){
     absent(g);
+    emit_collapse(&g->hands);
     g->turn = (g->turn + 1) % NP;
     g->pass_counter++;
 
@@ -172,19 +187,17 @@ void perfect_pick(Game *g, Move move){
     set_sole_owner_pick(g->turn, &g->hands, move.perfect_pick.left, move.perfect_pick.right);
     g->hands.hand_sizes[g->turn]++;
     g->hands.hand_sizes[NP]--;
-    if(!g->hands.hand_sizes[NP])
-        destroy_boneyard(&g->hands);
+    emit_collapse(&g->hands);
 }
 
 void imperfect_pick(Game *g, Move move){
     absent(g);
     unabsent(g); // yes, this is very confusing, i'm rapidly losing the will to do this.
-    print_game(g);
+    //print_game(g);
     g->hands.hand_sizes[g->turn] += move.imperfect_pick.count;
     g->hands.hand_sizes[NP] -= move.imperfect_pick.count;    
-    print_game(g);
-    if(!g->hands.hand_sizes[NP])
-        destroy_boneyard(&g->hands);
+    //print_game(g);
+    emit_collapse(&g->hands);
 }
 
 int over(Game *g){

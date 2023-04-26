@@ -20,7 +20,7 @@ float pick_loss_evaluation(Game *g){
     int wn = (g->hands.boneyard_solid_group_weights[left] + g->hands.boneyard_solid_group_weights[right]) >> (left == right) \
             - (left != right) * sole_possession(NP, &g->hands, left, right) * (left + right); // their weight
     float x = (float) (g->hands.hand_sizes[NP] - n) / (n + 1); // average number of dominoes picked before picking a playable domino
-    return heuristic_evaluation(g) + (1 - 2 * g->turn) * (weight(&g->hands, NP) - wn) * x;
+    return heuristic_evaluation(g) + (1 - 2 * g->turn) * ((weight(&g->hands, NP) - wn) * x) / g->hands.hand_sizes[NP];
 }
 
 float max(float a, float b) {
@@ -48,12 +48,19 @@ float minimax(Game *g, int depth, int maximizing_player){
     float pass_score = 0, prob = 0, score, best_score;
     get_moves(g, moves, &n, &cant_pass);
     if(!cant_pass){
-        prob = pass_probability(g, n - possible_possession(g->turn, &g->hands, g->snake.head->domino.left, g->snake.head->domino.right));
-        if(g->hands.hand_sizes[NP]){
-            pass_score = pick_loss_evaluation(g);
-        } else {
+        prob = pass_probability(g, n - (g->snake.head->domino.left != g->snake.head->domino.right) * \
+                possible_possession(g->turn, &g->hands, g->snake.head->domino.left, g->snake.head->domino.right));
+        if(prob){
             pass(g);
-            pass_score = minimax(g, depth, !maximizing_player);
+            if(g->hands.hand_sizes[NP]){
+                //printf("pick loss evaluation of :\n");
+                //print_game(g);
+                pass_score = pick_loss_evaluation(g);
+                //printf("is == %f (%f)", pass_score, heuristic_evaluation(g));
+                //printf("\n");
+            } else {
+                pass_score = minimax(g, depth, !maximizing_player);
+            }
             undo_pass(g, &anchor);
         }
     }

@@ -57,6 +57,15 @@ void decrement_solid_player(int player, Hands *hands, int i, int j){
     hands->solid_weights[player] -= i + j;
 }
 
+int boneyard_info_sound(Hands *hands){
+    int c = 0;
+    for(int i = 0; i < PIPS; i++){
+        c += hands->boneyard_solid_group_sizes[i];
+    }
+    if(c != hands->solid_hand_sizes[NP]) return 0;
+    return 1;
+}
+
 void increment_solid_boneyard(Hands *hands, int i, int j){
     hands->boneyard_solid_group_sizes[i]++;
     hands->solid_hand_sizes[NP]++;
@@ -197,7 +206,12 @@ void absent_piece(int player, Hands *hands, int i, int j){ // piece is not in th
         decrement_solid_player(player, hands, i, j);
     else 
         decrement_liquid(player, hands, i, j);*/
-    clear_owner_pass(player, hands, i, j);
+    if(!possible_possession(player, hands, i, j))
+        return;
+    and_ownership(~(1 << player), hands, i, j);
+    decrement_liquid(player, hands, i, j);
+    if(certain(hands, i, j))
+        convert_to_solid(sole_owner(hands, i, j), hands, i, j);
 }
 
 // game start, sets the piece to be owned by the player
@@ -227,12 +241,7 @@ void set_possible_owner_pick(int player, Hands *hands, int i, int j){ // imperfe
 }
 
 void clear_owner_pass(int player, Hands *hands, int i, int j){ // passes, (works for hand collapses).
-    if(!possible_possession(player, hands, i, j))
-        return;
-    and_ownership(~(1 << player), hands, i, j);
-    decrement_liquid(player, hands, i, j);
-    if(certain(hands, i, j))
-        convert_to_solid(sole_owner(hands, i, j), hands, i, j);
+    absent_piece(player, hands, i, j);
 }
 
 void clear_owner_play(int player, Hands *hands, int i, int j){ // plays, (can be used to erase a piece).
@@ -247,39 +256,43 @@ void clear_owner_play(int player, Hands *hands, int i, int j){ // plays, (can be
     set_ownership(0, hands, i, j);
 }
 
-void destroy_boneyard(Hands *hands){
-    for(int i = 0; i < PIPS; i++){
-        for(int j = 0; j <= i; j++){
-            if(possible_possession(NP, hands, i, j)){
-                and_ownership(~(1 << NP), hands, i, j);
-                if(certain(hands, i, j)){
-                    for(int p = 0; p < NP; p++){
-                        if(possible_possession(p, hands, i, j)){
-                            convert_to_solid_player(p, hands, i, j);
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
 // collapse hand, assumes that part of the hand is liquid.
-void collapse_hand(int player, Hands *hands){
+void collapse_hand_solidify(int player, Hands *hands){
     for(int i = 0; i < PIPS; i++){
         for(int j = 0; j <= i; j++){
-            if(possible_possession(player, hands, i, j)){
+            if(possible_possession(player, hands, i, j) && !certain(hands, i, j))
                 collapse_piece(player, hands, i, j);
-            }
         }
     }
 }
 
-void emit_collapse(int player, Hands *hands){
-    if(!hands->liquid_hand_sizes[player] || hands->hand_sizes[player] != hands->solid_hand_sizes[player] + hands->liquid_hand_sizes[player])
+void collapse_hand_evaporate(int player, Hands *hands){
+    for(int i = 0; i < PIPS; i++){
+        for(int j = 0; j <= i; j++){
+            if(possible_possession(player, hands, i, j) && !certain(hands, i, j))
+                absent_piece(player, hands, i, j);
+        }
+    }
+}
+
+void cascade_collapse(int player, Hands *hands){
+    if(!hands->liquid_hand_sizes[player])
         return;
-    collapse_hand(player, hands);
+    if(hands->hand_sizes[player] - hands->solid_hand_sizes[player] == hands->liquid_hand_sizes[player])
+        collapse_hand_solidify(player, hands);
+    else if(hands->hand_sizes[player] - hands->solid_hand_sizes[player] == 0)
+        collapse_hand_evaporate(player, hands);
+    else return;
+    for(int p = 0; p <= NP; p++){
+        if(p != player)
+            cascade_collapse(p, hands);
+    }
+}
+
+void emit_collapse(Hands *hands){
+    for(int p = 0; p <= NP; p++){
+        cascade_collapse(p, hands);
+    }
 }
 
 int solid_weight(Hands *hands, int player){
