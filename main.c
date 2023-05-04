@@ -13,7 +13,8 @@ void start(){
     get_hands(&g->hands);
     printf("Game starts with turn : ");
     scanf("%d", &g->turn);
-    int n, cant_pass, ai, depth;
+    int n, cant_pass, ai_play, depth;
+    enum Mode ai_mode;
     Move moves[DCOUNT], move;
     do {
         print_game(g);
@@ -21,18 +22,27 @@ void start(){
         print_moves(moves, n);
         printf("%d moves\n", n);
         if(cant_pass) printf("cant pass\n");
-        if(n == 0 && g->hands.hand_sizes[NP] == 0){
-            pass(g);
-            continue;
-        }
-        if(cant_pass && n == 1){
+        if(n == 0){
+            if(g->hands.hand_sizes[NP]){
+                if(is_passing(g, NP)){
+                    Move pick_all_of_boneyard;
+                    pick_all_of_boneyard.type = IMPERFECT_PICK;
+                    pick_all_of_boneyard.imperfect_pick.count = g->hands.hand_sizes[NP];
+                    imperfect_pick(g, pick_all_of_boneyard);
+                    continue;
+                }
+            } else {
+                pass(g);
+                continue;
+            }
+        } else if (cant_pass && n == 1){
             play_move(g, moves[0]);
             continue;
         }
         if(!cant_pass)
-            printf("give move type (left = %d, right = %d, perfect pick = %d, imperfect pick = %d, pass = %d): ", LEFT, RIGHT, PERFECT_PICK, IMPERFECT_PICK, PASS);
+            printf("give move type (left = %d, right = %d, perf pick = %d, imp pick = %d, pass = %d)(AI def): ", LEFT, RIGHT, PERFECT_PICK, IMPERFECT_PICK, PASS);
         else
-            printf("give move type (left = %d, right = %d): ", LEFT, RIGHT);
+            printf("give move type (left = %d, right = %d)(AI def): ", LEFT, RIGHT);
         scanf("%d", &move.type);
         switch(move.type){
         case LEFT:
@@ -74,12 +84,26 @@ void start(){
             pass(g);
             break;
         default: // play AI move
-            printf("give depth : ");
+            if(n == 0){
+                printf("reading three ints (consistency):");
+                scanf("%*d %*d %*d");
+                printf("no moves to choose AI move from\n");
+                break;
+            }
+            printf("give ai mode (pessimist = %d, avg = %d): ", PESSIMIST, AVG);
+            scanf("%d", &ai_mode);
+            printf("give depth of search (-1 = inf): ");
             scanf("%d", &depth);
-            move = best_move(g, depth);
+            switch(ai_mode){
+            case PESSIMIST:
+                move = best_move(g, depth);
+                break;
+            case AVG:
+                move = best_move_avg(g, depth);
+            }
             printf("play the move? : ");
-            scanf("%d", &ai);
-            if(ai){
+            scanf("%d", &ai_play);
+            if(ai_play){
                 play_move(g, move);
             }
         }
