@@ -68,6 +68,7 @@ int boneyard_info_sound(Hands *hands){
 
 void increment_solid_boneyard(Hands *hands, int i, int j){
     hands->boneyard_solid_group_sizes[i]++;
+    hands->boneyard_solid_group_sizes[j] += (i != j);
     hands->solid_hand_sizes[NP]++;
     hands->boneyard_solid_group_weights[i] += i + j;
     hands->boneyard_solid_group_weights[j] += (i != j) * (i + j);
@@ -76,6 +77,7 @@ void increment_solid_boneyard(Hands *hands, int i, int j){
 
 void decrement_solid_boneyard(Hands *hands, int i, int j){
     hands->boneyard_solid_group_sizes[i]--;
+    hands->boneyard_solid_group_sizes[j] -= (i != j);
     hands->solid_hand_sizes[NP]--;
     hands->boneyard_solid_group_weights[i] -= i + j;
     hands->boneyard_solid_group_weights[j] -= (i != j) * (i + j);
@@ -180,10 +182,14 @@ int sole_owner(Hands *hands, int i, int j){
 
 // perfect boneyard picks
 void set_sole_owner_pick(int player, Hands *hands, int i, int j){ // needs not be optimized
-    if(certain(hands, i, j))
+    if(certain(hands, i, j)){
         decrement_solid_boneyard(hands, i, j);
-    else
-        decrement_liquid(NP, hands, i, j);
+    } else {
+        for(int p = 0; p <= NP; p++){
+            if(possible_possession(p, hands, i, j))
+                decrement_liquid(p, hands, i, j);
+        }
+    }
     increment_solid_player(player, hands, i, j);
     set_ownership((1 << player), hands, i, j);
 }
@@ -200,13 +206,7 @@ void collapse_piece(int player, Hands *hands, int i, int j){ // collapse piece t
 }
 
 void absent_piece(int player, Hands *hands, int i, int j){ // piece is not in the player's hand
-    /*if(!possible_possession(player, hands, i, j))
-        return;
-    if(certain(hands, i, j))
-        decrement_solid_player(player, hands, i, j);
-    else 
-        decrement_liquid(player, hands, i, j);*/
-    if(!possible_possession(player, hands, i, j))
+    if(!possible_possession(player, hands, i, j) || certain(hands, i, j))
         return;
     and_ownership(~(1 << player), hands, i, j);
     decrement_liquid(player, hands, i, j);
@@ -236,7 +236,7 @@ void set_possible_owner_pick(int player, Hands *hands, int i, int j){ // imperfe
         return;
     if(certain(hands, i, j))
         convert_to_liquid_boneyard(hands, i, j);
-    increment_liquid(player, hands, i, j);
+     increment_liquid(player, hands, i, j);
     or_ownership((1 << player), hands, i, j);
 }
 
@@ -310,14 +310,18 @@ float weight(Hands *hands, int player){
 }
 
 void print_hand(Hands *hands, int player) {
+    int max = 0, min = 0;
     if(player == NP) printf("Boneyard:");
     else printf("Player %d:", player);
     for(int i = 0; i < PIPS; i++) {
         for(int j = 0; j <= i; j++) {
             if(possible_possession(player, hands, i, j)){
+                max++;
                 printf(" [%d|%d]", i, j);
-                if(certain(hands, i, j))
+                if(certain(hands, i, j)){
+                    min++;
                     printf("*");
+                }
             }
         }
     }
@@ -325,7 +329,7 @@ void print_hand(Hands *hands, int player) {
     float lw = collapsed_liquid_weight(hands, player);
     int tsw = calc_solid_weight(player, hands);
     float tlw = calc_true_liquid_weight(player, hands);
-    printf(" \nweights: %d (%d)+ %f (%f)= %f\n", tsw, sw, tlw, lw, weight(hands, player));
+    printf(" \nsizes: liquid = %d, solid = %d, true = %d, weights: %d (%d)+ %f (%f)= %f\n", hands->liquid_hand_sizes[player], hands->solid_hand_sizes[player], hands->hand_sizes[player], tsw, sw, tlw, lw, weight(hands, player));
 }
 
 void get_hand_sizes(Hands *hands) {
