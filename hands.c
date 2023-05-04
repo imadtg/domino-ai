@@ -236,7 +236,7 @@ void set_possible_owner_pick(int player, Hands *hands, int i, int j){ // imperfe
         return;
     if(certain(hands, i, j))
         convert_to_liquid_boneyard(hands, i, j);
-     increment_liquid(player, hands, i, j);
+    increment_liquid(player, hands, i, j);
     or_ownership((1 << player), hands, i, j);
 }
 
