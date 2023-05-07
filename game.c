@@ -31,6 +31,19 @@ int playable_move(Snake *s, enum Type type, int left, int right) {
     }
 }
 
+int symmetric_move(Snake *s, enum Type type, int left, int right) { // tests whether this move can be played on both sides as is.
+    if(s->head == NULL)
+        return 1;
+    switch(type) {
+        case LEFT:
+            return s->head->domino.right == left;
+        case RIGHT:
+            return s->tail->domino.left == right;
+        default:
+            return 1;
+    }
+}
+
 int playable_domino(Snake *s, int left, int right) {
     return s->head == NULL || left == s->head->domino.left || left == s->tail->domino.right \
             || right == s->head->domino.left || right == s->tail->domino.right;
@@ -47,7 +60,7 @@ int is_passing(Game *g, int player){ // test whether a player will pass if given
 }
 
 void print_game(Game *g){
-    printf("--------------------\n");
+    printf("-------------------------------------------------------------\n");
     // print the hands then the snake.
     for(int i = 0; i <= NP; i++) {
         print_hand(&g->hands, i);
@@ -106,7 +119,7 @@ float pass_probability(Game *g, int n){// n is the number of distinct playable d
     int m = g->hands.liquid_hand_sizes[g->turn] - n; // number of unknown dominoes that are not playable
     if(k > m)
         return 0.0f;
-    return  ((float) (FACTORIAL[m]) / (FACTORIAL[m-k])) * ((float) (FACTORIAL[m + n - k]) / (FACTORIAL[m + n]));
+    return  ((float) FACTORIAL[m] / FACTORIAL[m-k]) * ((float) FACTORIAL[m + n - k] / FACTORIAL[m + n]);
 }
 
 

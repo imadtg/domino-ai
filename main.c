@@ -90,7 +90,7 @@ void start(){
                 printf("no moves to choose AI move from\n");
                 break;
             }
-            printf("give ai mode (pessimist = %d, avg = %d): ", PESSIMIST, AVG);
+            printf("give ai mode (pessimist = %d, avg = %d, expect = %d): ", PESSIMIST, AVG, EXPECT);
             scanf("%d", &ai_mode);
             printf("give depth of search (-1 = inf): ");
             scanf("%d", &depth);
@@ -100,9 +100,14 @@ void start(){
                 break;
             case AVG:
                 move = best_move_avg(g, depth);
+                break;
+            case EXPECT:
+                move = best_move_expect(g, depth);
+                break;
             }
             printf("play the move? : ");
             scanf("%d", &ai_play);
+            printf("\n");
             if(ai_play){
                 play_move(g, move);
             }

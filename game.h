@@ -23,6 +23,7 @@ void init_game(Game *g);
 
 // Functions for checking if a domino can be played
 int playable_move(Snake *s, enum Type type, int left, int right);
+int symmetric_move(Snake *s, enum Type type, int left, int right);
 int playable_domino(Snake *s, int left, int right);
 
 int is_passing(Game *g, int player);
