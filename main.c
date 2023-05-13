@@ -10,7 +10,7 @@ void start(){
     Game *g = malloc(sizeof(Game));
     init_game(g);
     get_hand_sizes(&g->hands);
-    get_hands(&g->hands);
+    get_hand(&g->hands, 1);
     printf("Game starts with turn : ");
     scanf("%d", &g->turn);
     int n, cant_pass, ai_play, depth;

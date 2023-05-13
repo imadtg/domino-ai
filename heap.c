@@ -127,10 +127,16 @@ void minheap_update(Heap *h, int heap_index, Move move, int move_index, float sc
     h->array[heap_index].move = move;
     h->array[heap_index].move_index = move_index;
     h->array[heap_index].score = score;
+
+    minheapify_up(h, heap_index);
+    minheapify_down(h, heap_index);
 }
 
 void maxheap_update(Heap *h, int heap_index, Move move, int move_index, float score){
     h->array[heap_index].move = move;
     h->array[heap_index].move_index = move_index;
     h->array[heap_index].score = score;    
+
+    maxheapify_up(h, heap_index);
+    maxheapify_down(h, heap_index);
 }

@@ -12,7 +12,7 @@ float heuristic_evaluation(Game *g){
     return weight(&g->hands, 0) - weight(&g->hands, 1);
 }
 
-float pick_loss_evaluation(Game *g){ // the loss of the player who just passed if he had picked instead.
+float pick_loss_evaluation(Game *g){ // the loss of the player who's turn it is if he starts picking from the bonyard.
     int left = g->snake.tail->domino.left;
     int right = g->snake.head->domino.right;
     int n = (g->hands.boneyard_solid_group_sizes[left] + g->hands.boneyard_solid_group_sizes[right]); // number of dominoes that can be played in the boneyard
@@ -118,7 +118,6 @@ float expectiminimax(Game *g, int depth, int maximizing_player){
     Hands anchor = g->hands;
     float pass_score = 0, prob = 0, score, best_score, symmetric_score;
     get_moves(g, moves, &n, &cant_pass);
-    init_heap(&move_heap, n);
     if(!cant_pass){
         prob = pass_probability(g, n - possible_possession(g->turn, &g->hands, g->snake.head->domino.right, g->snake.tail->domino.left));
         if(prob){
@@ -143,6 +142,7 @@ float expectiminimax(Game *g, int depth, int maximizing_player){
         }
     }
     if(n == 0) return pass_score;
+    init_heap(&move_heap, n);
     if(maximizing_player){
         for(int i = 0; i < n; i++){
             play_move(g, moves[i]);

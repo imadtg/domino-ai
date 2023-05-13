@@ -341,16 +341,25 @@ void get_hand_sizes(Hands *hands) {
     scanf("%d", &hands->hand_sizes[NP]);
 }
 
-void get_hands(Hands *hands) {
-    int a;
+void get_hand(Hands *hands, int player) { // reads the dominoes of one player, while eliminating all others from this hand.
+    int left, right;
+    int mask[PIPS][PIPS];
+    memset(mask, 0, PIPS * PIPS * sizeof(int));
+    printf("Give player %d's dominoes: \n", player);
+    for(int i = 0; i < hands->hand_sizes[player]; i++){
+        printf("Give domino %d: ", i);
+        do{
+            scanf("%d %d", &left, &right);
+        }while(left < 0 || left >= PIPS || right < 0 || right > PIPS || mask[left][right]);
+        mask[left][right] = 1;
+        mask[right][left] = 1;
+    }
     for(int i = 0; i < PIPS; i++){
         for(int j = 0; j <= i; j++){
-            printf("[%d|%d]: ", i, j);
-            scanf("%d", &a);
-            if(a){
+            if(mask[i][j]){
                 set_sole_owner_start(1, hands, i, j);
             } else {
-                set_outside_owner_start(1, hands, i, j);
+                set_outside_owner_start(1, hands, i, j);// TODO: make this eliminate domino from hand instead of setting it to be everywhere outside the hand.
             }
         }
     }

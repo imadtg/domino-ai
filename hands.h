@@ -81,6 +81,6 @@ void print_hand(Hands *hands, int player);
 
 // Hand read
 void get_hand_sizes(Hands *hands);
-void get_hands(Hands *hands);
+void get_hand(Hands *hands, int player);
 
 #endif
