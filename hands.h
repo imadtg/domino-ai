@@ -3,20 +3,21 @@
 #include "cst.h"
 
 typedef struct {
-    int ownership[PIPS][PIPS];
+    int size; // the span of the group
+    int weight; // the weight of the group
+} GroupInfo;
+
+typedef GroupInfo LiquidGroup;
+
+typedef GroupInfo SolidGroup;
+
+typedef struct {
+    int ownership[PIPS][PIPS]; // the mask of ownership of every domino, is 1 in the bit in the position of the player if the player can have the domino, 0 otherwise.
     int hand_sizes[NP+1];
-    // this is the sum of weights of all the dominoes that the player can have,
-    // not to be confused with the sum of weights of the dominoes in the player's hand
-    int liquid_weights[NP+1];
-    int liquid_hand_sizes[NP+1]; // this is the number of distinct dominoes the player can have, not to be confused with the number of dominoes in the player's hand
-    int solid_weights[NP+1]; // this is the sum of weights of all the dominoes that we are sure the player has
-    int solid_hand_sizes[NP+1]; // this is the number of distinct dominoes that we are sure the player has
-    int boneyard_solid_group_weights[PIPS]; // this is the weight of each group of dominoes by pip value that we are sure is in the boneyard, used to calculate average hand weight after picking up from a boneyard.
-    int boneyard_solid_group_sizes[PIPS]; // this is the number of dominoes in each group of dominoes by pip value that we are sure is in the boneyard, used to calculate average hand weight after picking up from a boneyard.
+    LiquidGroup liquid_groups[NP+1]; // this is the table that stores the liquid groups of each player's hand.
+    SolidGroup solid_groups[NP+1]; // this is the table that stores the solid group of each player's hand.
+    SolidGroup boneyard_groups_grouped_by_pip[PIPS]; // this table stores the weight and number of solid dominoes grouped by pip in the boneyard, used for pick loss evaluation.
 } Hands;
-
-
-void init_hands(Hands *hands);
 
 // Weight calculation
 int calc_solid_weight(int player, Hands *hands);
@@ -57,18 +58,25 @@ int no_possession(Hands *hands, int i, int j);
 int certain(Hands *hands, int i, int j);
 int sole_owner(Hands *hands, int i, int j);
 
+// Hand testing
+int hand_is_solid(int player, Hands *hands);
+int hand_is_liquid(int player, Hands *hands);
+int hand_is_empty(int player, Hands *hands);
+
 // Ownership modifications after moves/start
 void set_sole_owner_pick(int player, Hands *hands, int i, int j);
 void collapse_piece(int player, Hands *hands, int i, int j);
 void absent_piece(int player, Hands *hands, int i, int j);
 void set_sole_owner_start(int player, Hands *hands, int i, int j);
 void set_outside_owner_start(int player, Hands *hands, int i, int j);
+void set_everywhere_start(Hands *hands, int i, int j);
 void set_possible_owner_pick(int player, Hands *hands, int i, int j);
 void clear_owner_pass(int player, Hands *hands, int i, int j);
 void clear_owner_play(int player, Hands *hands, int i, int j);
-void collapse_hand_evaporate(int player, Hands *hands);
 void collapse_hand_solidify(int player, Hands *hands);
+void collapse_hand_evaporate(int player, Hands *hands);
 void cascade_collapse(int player, Hands *hands);
+int collapse_hand(int player, Hands *hands);
 void emit_collapse(Hands *hands);
 
 // Weight queries
@@ -79,8 +87,9 @@ float weight(Hands *hands, int player);
 // Hand print
 void print_hand(Hands *hands, int player);
 
-// Hand read
+// Hand initialization
 void get_hand_sizes(Hands *hands);
+void init_hands(Hands *hands);
 void get_hand(Hands *hands, int player);
 
 #endif

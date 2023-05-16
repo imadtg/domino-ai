@@ -39,7 +39,9 @@ void start(){
             play_move(g, moves[0]);
             continue;
         }
-        if(!cant_pass)
+        if(!cant_pass && n == 0)
+            printf("give move type (perf pick = %d, imp pick = %d, pass = %d): ", PERFECT_PICK, IMPERFECT_PICK, PASS);
+        else if(!cant_pass)
             printf("give move type (left = %d, right = %d, perf pick = %d, imp pick = %d, pass = %d)(AI def): ", LEFT, RIGHT, PERFECT_PICK, IMPERFECT_PICK, PASS);
         else
             printf("give move type (left = %d, right = %d)(AI def): ", LEFT, RIGHT);
@@ -90,19 +92,16 @@ void start(){
                 printf("no moves to choose AI move from\n");
                 break;
             }
-            printf("give ai mode (pessimist = %d, avg = %d, expect = %d): ", PESSIMIST, AVG, EXPECT);
+            printf("give ai mode (pessimist = %d, expect = %d): ", PESSIMIST, EXPECT);
             scanf("%d", &ai_mode);
             printf("give depth of search (-1 = inf): ");
             scanf("%d", &depth);
             switch(ai_mode){
             case PESSIMIST:
-                move = best_move(g, depth);
-                break;
-            case AVG:
-                move = best_move_avg(g, depth);
+                move = best_move(g, depth, minimax);
                 break;
             case EXPECT:
-                move = best_move_expect(g, depth);
+                move = best_move(g, depth, expectiminimax);
                 break;
             }
             printf("play the move? : ");

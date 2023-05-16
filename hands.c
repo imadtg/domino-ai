@@ -1,10 +1,5 @@
 #include "hands.h"
 
-// initialize a hands struct
-void init_hands(Hands *hands){
-    memset(hands, 0, sizeof(*hands));
-}
-
 int calc_solid_weight(int player, Hands *hands){
     int w = 0;
     for(int i = 0; i < PIPS; i++){
@@ -40,7 +35,7 @@ float calc_collapsed_liquid_weight(int player, Hands *hands, int collapsing_size
 }
 
 float calc_true_liquid_weight(int player, Hands *hands){
-    return calc_collapsed_liquid_weight(player, hands, hands->hand_sizes[player] - hands->solid_hand_sizes[player]);
+    return calc_collapsed_liquid_weight(player, hands, hands->hand_sizes[player] - hands->solid_groups[player].size);
 }
 
 float calc_weight(int player, Hands *hands){
@@ -48,40 +43,31 @@ float calc_weight(int player, Hands *hands){
 }
 
 void increment_solid_player(int player, Hands *hands, int i, int j){
-    hands->solid_hand_sizes[player]++;
-    hands->solid_weights[player] += i + j;
+    hands->solid_groups[player].size++;
+    hands->solid_groups[player].weight += i + j;
 }
 
 void decrement_solid_player(int player, Hands *hands, int i, int j){
-    hands->solid_hand_sizes[player]--;
-    hands->solid_weights[player] -= i + j;
-}
-
-int boneyard_info_sound(Hands *hands){
-    int c = 0;
-    for(int i = 0; i < PIPS; i++){
-        c += hands->boneyard_solid_group_sizes[i];
-    }
-    if(c != hands->solid_hand_sizes[NP]) return 0;
-    return 1;
+    hands->solid_groups[player].size--;
+    hands->solid_groups[player].weight -= i + j;
 }
 
 void increment_solid_boneyard(Hands *hands, int i, int j){
-    hands->boneyard_solid_group_sizes[i]++;
-    hands->boneyard_solid_group_sizes[j] += (i != j);
-    hands->solid_hand_sizes[NP]++;
-    hands->boneyard_solid_group_weights[i] += i + j;
-    hands->boneyard_solid_group_weights[j] += (i != j) * (i + j);
-    hands->solid_weights[NP] += i + j;
+    hands->boneyard_groups_grouped_by_pip[i].size++;
+    hands->boneyard_groups_grouped_by_pip[j].size += (i != j);
+    hands->solid_groups[NP].size++;
+    hands->boneyard_groups_grouped_by_pip[i].weight += i + j;
+    hands->boneyard_groups_grouped_by_pip[j].weight += (i != j) * (i + j);
+    hands->solid_groups[NP].weight += i + j;
 }
 
 void decrement_solid_boneyard(Hands *hands, int i, int j){
-    hands->boneyard_solid_group_sizes[i]--;
-    hands->boneyard_solid_group_sizes[j] -= (i != j);
-    hands->solid_hand_sizes[NP]--;
-    hands->boneyard_solid_group_weights[i] -= i + j;
-    hands->boneyard_solid_group_weights[j] -= (i != j) * (i + j);
-    hands->solid_weights[NP] -= i + j;
+    hands->boneyard_groups_grouped_by_pip[i].size--;
+    hands->boneyard_groups_grouped_by_pip[j].size -= (i != j);
+    hands->solid_groups[NP].size--;
+    hands->boneyard_groups_grouped_by_pip[i].weight -= i + j;
+    hands->boneyard_groups_grouped_by_pip[j].weight -= (i != j) * (i + j);
+    hands->solid_groups[NP].weight -= i + j;
 }
 
 void increment_solid(int player, Hands *hands, int i, int j){
@@ -99,13 +85,18 @@ void decrement_solid(int player, Hands *hands, int i, int j){
 }
 
 void increment_liquid(int player, Hands *hands, int i, int j){
-    hands->liquid_hand_sizes[player]++;
-    hands->liquid_weights[player] += i + j;
+    /*hands->liquid_hand_sizes[player]++;
+    hands->liquid_weights[player] += i + j;*/
+    //hands->liquid_hand_sizes[player]++;
+    hands->liquid_groups[player].size++;
+    hands->liquid_groups[player].weight += i + j;
 }
 
 void decrement_liquid(int player, Hands *hands, int i, int j){
-    hands->liquid_hand_sizes[player]--;
-    hands->liquid_weights[player] -= i + j;
+    /*hands->liquid_hand_sizes[player]--;
+    hands->liquid_weights[player] -= i + j;*/
+    hands->liquid_groups[player].size--;
+    hands->liquid_groups[player].weight -= i + j;
 }
 
 void convert_to_liquid_player(int player, Hands *hands, int i, int j){
@@ -180,6 +171,18 @@ int sole_owner(Hands *hands, int i, int j){
     return __builtin_ctz(hands->ownership[i][j]);
 }
 
+int hand_is_solid(int player, Hands *hands){
+    return hands->solid_groups[player].size == hands->hand_sizes[player];
+}
+
+int hand_is_liquid(int player, Hands *hands){
+    return hands->solid_groups[player].size == 0;
+}
+
+int hand_is_empty(int player, Hands *hands){
+    return hands->hand_sizes[player] == 0;
+}
+
 // perfect boneyard picks
 void set_sole_owner_pick(int player, Hands *hands, int i, int j){ // needs not be optimized
     if(certain(hands, i, j)){
@@ -215,7 +218,7 @@ void absent_piece(int player, Hands *hands, int i, int j){ // piece is not in th
 }
 
 // game start, sets the piece to be owned by the player
-void set_sole_owner_start(int player, Hands *hands, int i, int j){
+void set_sole_owner_start(int player, Hands *hands, int i, int j){ // unused
     increment_solid_player(player, hands, i, j);
     set_ownership((1 << player), hands, i, j);
 }
@@ -223,12 +226,20 @@ void set_sole_owner_start(int player, Hands *hands, int i, int j){
 // game start, sets the piece to not be owned by this person in the game start,
 // essentially sets it as possible to be owned by everyone other than this player,
 // never used on a boneyard. assumes that there is atleast two possible owners outside of this player.
-void set_outside_owner_start(int player, Hands *hands, int i, int j){ // needs not be optimized
+void set_outside_owner_start(int player, Hands *hands, int i, int j){ // unused
     for(int p = 0; p <= NP; p++){
         if(p != player)
             increment_liquid(p, hands, i, j);
     }
     set_ownership((1 << (NP + 1)) - 1 - (1 << player), hands, i, j);
+}
+
+// set this domino to be in every player's liquid group.
+void set_everywhere_start(Hands *hands, int i, int j){ // needs not be optimized
+    for(int p = 0; p <= NP; p++){
+        increment_liquid(p, hands, i, j);
+    }
+    set_ownership((1 << (NP + 1)) - 1, hands, i, j);
 }
 
 void set_possible_owner_pick(int player, Hands *hands, int i, int j){ // imperfect picks, needs not be optimized
@@ -244,7 +255,7 @@ void clear_owner_pass(int player, Hands *hands, int i, int j){ // passes, (works
     absent_piece(player, hands, i, j);
 }
 
-void clear_owner_play(int player, Hands *hands, int i, int j){ // plays, (can be used to erase a piece).
+void clear_owner_play(int player, Hands *hands, int i, int j){ // plays, (can't be used to erase a piece because it assumes the player has it in a liquid group or a solid group).
     if(certain(hands, i, j)){
         decrement_solid_player(player, hands, i, j);
     } else {
@@ -276,17 +287,24 @@ void collapse_hand_evaporate(int player, Hands *hands){
 }
 
 void cascade_collapse(int player, Hands *hands){
-    if(!hands->liquid_hand_sizes[player])
-        return;
-    if(hands->hand_sizes[player] - hands->solid_hand_sizes[player] == hands->liquid_hand_sizes[player])
-        collapse_hand_solidify(player, hands);
-    else if(hands->hand_sizes[player] - hands->solid_hand_sizes[player] == 0)
-        collapse_hand_evaporate(player, hands);
-    else return;
+    if(!collapse_hand(player, hands)) return;
     for(int p = 0; p <= NP; p++){
         if(p != player)
             cascade_collapse(p, hands);
     }
+}
+
+int collapse_hand(int player, Hands *hands){
+    if(hand_is_solid(player, hands))
+        return 0;
+    if(hands->hand_sizes[player] - hands->solid_groups[player].size == hands->liquid_groups[player].size){
+        collapse_hand_solidify(player, hands);
+        return 1;
+    } else if(hands->hand_sizes[player] - hands->solid_groups[player].size == 0){
+        collapse_hand_evaporate(player, hands);
+        return 1;
+    }
+    return 0;
 }
 
 void emit_collapse(Hands *hands){
@@ -296,13 +314,13 @@ void emit_collapse(Hands *hands){
 }
 
 int solid_weight(Hands *hands, int player){
-    return hands->solid_weights[player];
+    return hands->solid_groups[player].weight;
 }
 
 float collapsed_liquid_weight(Hands *hands, int player){
-    if(hands->liquid_hand_sizes[player] == 0)
+    if(hands->liquid_groups[player].size == 0)
         return 0.0f;
-    return (float) (hands->liquid_weights[player] * (hands->hand_sizes[player] - hands->solid_hand_sizes[player])) / hands->liquid_hand_sizes[player];
+    return (float) (hands->liquid_groups[player].weight * (hands->hand_sizes[player] - hands->solid_groups[player].size)) / hands->liquid_groups[player].size;
 }
 
 float weight(Hands *hands, int player){
@@ -329,10 +347,11 @@ void print_hand(Hands *hands, int player) {
     float lw = collapsed_liquid_weight(hands, player);
     int tsw = calc_solid_weight(player, hands);
     float tlw = calc_true_liquid_weight(player, hands);
-    printf(" \nsizes: liquid = %d, solid = %d, true = %d, weights: %d (%d)+ %f (%f)= %f\n", hands->liquid_hand_sizes[player], hands->solid_hand_sizes[player], hands->hand_sizes[player], tsw, sw, tlw, lw, weight(hands, player));
+    printf("\nsizes: liquid = %d, solid = %d, true = %d, weights: %d (%d)+ %f (%f)= %f\n", hands->liquid_groups[player].size, hands->solid_groups[player].size, hands->hand_sizes[player], tsw, sw, tlw, lw, weight(hands, player));
 }
 
 void get_hand_sizes(Hands *hands) {
+    // TODO: allow silent games
     for(int i = 0; i < NP; i++){
         printf("Player %d: ", i);
         scanf("%d", &hands->hand_sizes[i]);
@@ -341,11 +360,23 @@ void get_hand_sizes(Hands *hands) {
     scanf("%d", &hands->hand_sizes[NP]);
 }
 
+// initialize a hands struct
+void init_hands(Hands *hands){
+    memset(hands, 0, sizeof(*hands));
+    for(int i = 0; i < PIPS; i++){
+        for(int j = 0; j <= i; j++){
+            set_everywhere_start(hands, i, j);
+        }
+    }
+}
+
 void get_hand(Hands *hands, int player) { // reads the dominoes of one player, while eliminating all others from this hand.
+    // TODO: make a version that allows silent games
     int left, right;
     int mask[PIPS][PIPS];
     memset(mask, 0, PIPS * PIPS * sizeof(int));
-    printf("Give player %d's dominoes: \n", player);
+    if(player == NP) printf("Give boneyard: \n");
+    else printf("Give player %d's dominoes: \n", player);
     for(int i = 0; i < hands->hand_sizes[player]; i++){
         printf("Give domino %d: ", i);
         do{
@@ -357,10 +388,11 @@ void get_hand(Hands *hands, int player) { // reads the dominoes of one player, w
     for(int i = 0; i < PIPS; i++){
         for(int j = 0; j <= i; j++){
             if(mask[i][j]){
-                set_sole_owner_start(1, hands, i, j);
+                collapse_piece(player, hands, i, j);
             } else {
-                set_outside_owner_start(1, hands, i, j);// TODO: make this eliminate domino from hand instead of setting it to be everywhere outside the hand.
+                absent_piece(player, hands, i, j);
             }
         }
     }
+    emit_collapse(hands);
 }

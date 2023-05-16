@@ -23,7 +23,7 @@ void init_game(Game *g);
 
 // Functions for checking if a domino can be played
 int playable_move(Snake *s, enum Type type, int left, int right);
-int symmetric_move(Snake *s, enum Type type, int left, int right);
+int symmetric_non_double_move(Snake *s, Move move);
 int playable_domino(Snake *s, int left, int right);
 
 int is_passing(Game *g, int player);
@@ -32,7 +32,8 @@ int is_passing(Game *g, int player);
 void print_game(Game *g);
 void get_moves(Game *g, Move moves[MAX], int *n, int *cant_pass);
 
-// Function for calculating pass probability
+// Functions for calculating pass probability
+float pass_probability_from_num_moves(Game *g, int n);
 float pass_probability(Game *g, int n);
 
 // Functions for playing and unplaying a move

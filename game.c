@@ -31,16 +31,18 @@ int playable_move(Snake *s, enum Type type, int left, int right) {
     }
 }
 
-int symmetric_move(Snake *s, enum Type type, int left, int right) { // tests whether this move can be played on both sides as is.
+int symmetric_non_double_move(Snake *s, Move move) { // tests whether this move can be played on both sides as is and isn't a double.
+    if(move.play.left == move.play.right)
+        return 0;
     if(s->head == NULL)
         return 1;
-    switch(type) {
+    switch(move.type) {
         case LEFT:
-            return s->head->domino.right == left;
+            return s->head->domino.right == move.play.left;
         case RIGHT:
-            return s->tail->domino.left == right;
+            return s->tail->domino.left == move.play.right;
         default:
-            return 1;
+            return 0;
     }
 }
 
@@ -112,11 +114,17 @@ void get_moves(Game *g, Move moves[MAX], int *n, int *cant_pass){
     }
 }
 
+float pass_probability_from_num_moves(Game *g, int n){
+    if(g->snake.head == NULL)
+        return 0.0f;
+    return pass_probability(g, n - possible_possession(g->turn, &g->hands, g->snake.head->domino.right, g->snake.tail->domino.left));
+}
+
 float pass_probability(Game *g, int n){// n is the number of distinct playable dominoes by the player
     if(n <= 0)
         return 1.0f;
-    int k = g->hands.hand_sizes[g->turn] - g->hands.solid_hand_sizes[g->turn]; // number of unknown dominoes
-    int m = g->hands.liquid_hand_sizes[g->turn] - n; // number of unknown dominoes that are not playable
+    int k = g->hands.hand_sizes[g->turn] - g->hands.solid_groups[g->turn].size; // number of unknown dominoes
+    int m = g->hands.liquid_groups[g->turn].size - n; // number of unknown dominoes that are not playable
     if(k > m)
         return 0.0f;
     return  ((float) FACTORIAL[m] / FACTORIAL[m-k]) * ((float) FACTORIAL[m + n - k] / FACTORIAL[m + n]);
@@ -202,7 +210,7 @@ void undo_pass(Game *g, Hands *prev){
 }
 
 void perfect_pick(Game *g, Move move){
-    if(g->hands.liquid_hand_sizes[g->turn])
+    if(!hand_is_solid(g->turn, &g->hands))
         absent(g);
     set_sole_owner_pick(g->turn, &g->hands, move.perfect_pick.left, move.perfect_pick.right);
     g->hands.hand_sizes[g->turn]++;
