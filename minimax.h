@@ -15,7 +15,6 @@ void process_absence(Game *g, Hands *anchor, float *pass_score, float *prob, int
 float minimax(Game *g, int depth);
 float expected_score_from_heap(Game *g, Heap *h, int liquid_size, int collapsing_size);
 float expectiminimax(Game *g, int depth);
-//float avgminimax(Game *g, int depth);
 Move best_move(Game *g, int depth, float (*ai_function)(Game *, int));
 
 #endif
