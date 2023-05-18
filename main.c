@@ -13,13 +13,14 @@ void start(){
     get_hand(&g->hands, 1);
     printf("Game starts with turn : ");
     scanf("%d", &g->turn);
-    int n, cant_pass, ai_play, depth;
+    int n, cant_pass, ai_play, skip, depth;
+    float (*ai_function)(Game *, int, int, int *);
     enum Mode ai_mode;
     Move moves[DCOUNT], move;
     do {
         print_game(g);
-        get_moves(g, moves, &n, &cant_pass);
-        print_moves(moves, n);
+        get_playing_moves(g, moves, &n, &cant_pass);
+        print_playing_moves(moves, n);
         printf("%d moves\n", n);
         if(cant_pass) printf("cant pass\n");
         if(n == 0){
@@ -29,6 +30,14 @@ void start(){
                     pick_all_of_boneyard.type = IMPERFECT_PICK;
                     pick_all_of_boneyard.imperfect_pick.count = g->hands.hand_sizes[NP];
                     imperfect_pick(g, pick_all_of_boneyard);
+                    continue;
+                }
+                else if(g->hands.hand_sizes[NP] == 1){
+                    Move pick_one_of_boneyard;
+                    int dummy;
+                    pick_one_of_boneyard.type = PERFECT_PICK;
+                    get_perfect_picking_moves(g, &pick_one_of_boneyard, &dummy); // VERY UNSAFE
+                    perfect_pick(g, pick_one_of_boneyard);
                     continue;
                 }
             } else {
@@ -85,26 +94,30 @@ void start(){
             }
             pass(g);
             break;
-        default: // play AI move
+        default: // AI move
             if(n == 0){
-                printf("reading three ints (consistency):");
-                scanf("%*d %*d %*d");
+                printf("reading 4 ints for consistency:");
+                scanf("%*d %*d %*d %*d");
                 printf("no moves to choose AI move from\n");
                 break;
             }
             printf("give ai mode (pessimist = %d, expect = %d): ", PESSIMIST, EXPECT);
             scanf("%d", &ai_mode);
-            printf("give depth of search (-1 = inf): ");
+            printf("skip exploring picking positions?: ");
+            scanf("%d", &skip);
+            printf("give depth of search (0 is iterative deepening, negative is infinite): ");
             scanf("%d", &depth);
             switch(ai_mode){
             case PESSIMIST:
-                move = best_move(g, depth, minimax);
+                ai_function = minimax;
                 break;
             case EXPECT:
-                move = best_move(g, depth, expectiminimax);
+                ai_function = expectiminimax;
                 break;
             }
-            printf("play the move? : ");
+            if(depth != 0) move = best_move(g, moves, NULL, n, depth, skip, NULL, ai_function);
+            else move = iterative_deepening(g, moves, n, skip, ai_function);
+            printf("play the move?: ");
             scanf("%d", &ai_play);
             printf("\n");
             if(ai_play){

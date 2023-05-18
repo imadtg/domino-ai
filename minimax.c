@@ -1,5 +1,16 @@
 #include "minimax.h"
 
+int FALLBACK = 0;
+
+WINBOOL interrupt_search(DWORD ctrl_type){
+    if (ctrl_type == CTRL_C_EVENT) {
+        FALLBACK = 1;
+        SetConsoleCtrlHandler((PHANDLER_ROUTINE)interrupt_search, FALSE);
+        return TRUE;
+    }
+    return FALSE;
+}
+
 float endgame_evaluation(Game *g){
     int weights[NP] = {0};
     for(int i = 0; i < NP; i++) {
@@ -24,43 +35,70 @@ float pick_loss_evaluation(Game *g){ // the loss of the player who's turn it is 
     return heuristic_evaluation(g) + (1 - 2 * g->turn) * (weight(&g->hands, NP) - wn) / (n + 1);
 }
 
-float max(float a, float b) {
-    if (a > b)
-        return a;
-    return b;
-}
-
-float min(float a, float b) {
-    if (a < b) 
-        return a;
-    return b;
-}
-
-void process_absence(Game *g, Hands *anchor, float *pass_score, float *prob, int n, int depth, float (*ai_function)(Game *, int)){
+void process_absence(Game *g, Hands *anchor, float *pass_score, float *prob, int n, int depth, int skip, int *nodes, float (*ai_function)(Game *, int, int, int *)){
     *prob = pass_probability_from_num_moves(g, n);
-    if(*prob){
-        if(!hand_is_empty(NP, &g->hands)){
-            if(is_passing(g, NP)){
+    if(*prob != 0){
+        if(!hand_is_empty(NP, &g->hands)){ // we have to handle picking from the boneyard
+            if(is_passing(g, NP)){ // there is no playable domino left in the boneyard, we will pick it all.
                 Move pick_all_of_boneyard;
                 pick_all_of_boneyard.type = IMPERFECT_PICK;
                 pick_all_of_boneyard.imperfect_pick.count = g->hands.hand_sizes[NP];
                 imperfect_pick(g, pick_all_of_boneyard);
-                *pass_score = ai_function(g, depth);
+                *pass_score = ai_function(g, depth, skip, nodes);
                 undo_imperfect_pick(g, anchor);
             } else {
-                absence_event(g);
-                *pass_score = pick_loss_evaluation(g);
-                undo_absence_event(g, anchor);
+                if(skip){ // to reduce the branching factor, we can estimate the score by the average weight difference after picking from the boneyard
+                    absence_event(g);
+                    *pass_score = pick_loss_evaluation(g);
+                    undo_absence_event(g, anchor);
+                } else {
+                    if(hand_is_solid(NP, &g->hands) || hand_is_solid(g->turn, &g->hands)){ // do not introduce uncertainty by doing imperfect picks if either boneyard or hand is known.
+                        Move perfect_picking_moves[g->hands.hand_sizes[NP]];
+                        int nperf;
+                        get_perfect_picking_moves(g, perfect_picking_moves, &nperf);
+                        *pass_score = 0;
+                        for(int i = 0; i < nperf; i++){
+                            perfect_pick(g, perfect_picking_moves[i]);
+                            *pass_score += ai_function(g, depth - 1, skip, nodes);
+                            undo_perfect_pick(g, anchor);
+                        }
+                        *pass_score /= nperf;
+                    } else {
+                        Move playable_perfect_picking_moves[g->hands.hand_sizes[NP]];
+                        int nplayperf;
+                        get_playable_perfect_picking_moves(g, playable_perfect_picking_moves, &nplayperf);
+                        float unplayable_prob = pick_unplayable_domino_probability_from_moves(g, playable_perfect_picking_moves, nplayperf);
+                        float pick_playable_score = 0, pick_unplayable_score = 0;
+                        for(int i = 0; i < nplayperf; i++){
+                            perfect_pick(g, playable_perfect_picking_moves[i]);
+                            pick_playable_score += ai_function(g, depth - 1, skip, nodes);
+                            undo_perfect_pick(g, anchor);
+                        }
+                        pick_playable_score /= nplayperf;
+                        if(unplayable_prob != 0){
+                            Move pick_unplayable;
+                            pick_unplayable.type = IMPERFECT_PICK;
+                            pick_unplayable.imperfect_pick.count = 1;
+                            imperfect_pick(g, pick_unplayable);
+                            pick_unplayable_score = ai_function(g, depth, skip, nodes);
+                            undo_imperfect_pick(g, anchor);
+                        }
+                        *pass_score = unplayable_prob * pick_unplayable_score + (1 - unplayable_prob) * pick_playable_score;
+                    }
+                }
             }
         } else {
             pass(g);
-            *pass_score = ai_function(g, depth);
+            *pass_score = ai_function(g, depth, skip, nodes);
             undo_pass(g, anchor);
         }
     }
 }
 
-float minimax(Game *g, int depth){
+float minimax(Game *g, int depth, int skip, int *nodes){
+    if(FALLBACK)
+        return 0;
+    (*nodes)++;
     if(over(g))
         return endgame_evaluation(g);
     if(depth == 0)
@@ -69,15 +107,15 @@ float minimax(Game *g, int depth){
     Move moves[MAX];
     Hands anchor = g->hands;
     float pass_score = 0, prob = 0, score, best_score;
-    get_moves(g, moves, &n, &cant_pass);
+    get_playing_moves(g, moves, &n, &cant_pass);
     if(!cant_pass){
-        process_absence(g, &anchor, &pass_score, &prob, n, depth, minimax);
+        process_absence(g, &anchor, &pass_score, &prob, n, depth, skip, nodes, minimax);
     }
     if(g->turn){
         best_score = -FLT_MAX;
         for(int i = 0; i < n; i++){
             play_move(g, moves[i]);
-            score = minimax(g, depth - 1);
+            score = minimax(g, depth - 1, skip, nodes);
             unplay_move(g, moves[i], &anchor, pc);
             best_score = max(best_score, score);
         }
@@ -85,7 +123,7 @@ float minimax(Game *g, int depth){
         best_score = FLT_MAX;
         for(int i = 0; i < n; i++){
             play_move(g, moves[i]);
-            score = minimax(g, depth - 1);
+            score = minimax(g, depth - 1, skip, nodes);
             unplay_move(g, moves[i], &anchor, pc);
             best_score = min(best_score, score);
         }
@@ -101,7 +139,10 @@ float expected_score_from_heap(Game *g, Heap *h, int liquid_size, int collapsing
     return probability_of_ownership * e.score + (1 - probability_of_ownership) * expected_score_from_heap(g, h, liquid_size - 1, collapsing_size);
 }
 
-float expectiminimax(Game *g, int depth){
+float expectiminimax(Game *g, int depth, int skip, int *nodes){
+    if(FALLBACK)
+        return 0;
+    (*nodes)++;
     if(over(g))
         return endgame_evaluation(g);
     if(depth == 0)
@@ -111,16 +152,16 @@ float expectiminimax(Game *g, int depth){
     Heap move_heap;
     Hands anchor = g->hands;
     float pass_score = 0, prob = 0, score, best_score;
-    get_moves(g, moves, &n, &cant_pass);
+    get_playing_moves(g, moves, &n, &cant_pass);
     if(!cant_pass){
-        process_absence(g, &anchor, &pass_score, &prob, n, depth, expectiminimax);
+        process_absence(g, &anchor, &pass_score, &prob, n, depth, skip, nodes, expectiminimax);
     }
     if(n == 0) return pass_score;
     init_heap(&move_heap, n, g->turn ? greater_than : less_than);
     if(g->turn){
         for(int i = 0; i < n; i++){
             play_move(g, moves[i]);
-            score = expectiminimax(g, depth - 1);
+            score = expectiminimax(g, depth - 1, skip, nodes);
             unplay_move(g, moves[i], &anchor, pc);
             heap_insert(&move_heap, moves[i], i, score, symmetric_non_double_move(&g->snake, moves[i]));
         }
@@ -128,7 +169,7 @@ float expectiminimax(Game *g, int depth){
     } else {
         for(int i = 0; i < n; i++){
             play_move(g, moves[i]);
-            score = expectiminimax(g, depth - 1);
+            score = expectiminimax(g, depth - 1, skip, nodes);
             unplay_move(g, moves[i], &anchor, pc);
             heap_insert(&move_heap, moves[i], i, score, symmetric_non_double_move(&g->snake, moves[i]));
         }
@@ -138,18 +179,23 @@ float expectiminimax(Game *g, int depth){
     return prob * pass_score + (1 - prob) * best_score; 
 }
 
-Move best_move(Game *g, int depth, float (*ai_function)(Game *, int)){
-    Move moves[DCOUNT], best_move;
-    int n = 0, cant_pass, pc = g->pass_counter;
+Move best_move(Game *g, Move moves[], float scores[], int n, int depth, int skip, int *nodes, float (*ai_function)(Game *, int, int, int *)){
+    float dummy_scores[n];
+    int dummy_nodes;
+    if(scores == NULL)
+        scores = dummy_scores;
+    if(nodes == NULL)
+        nodes = &dummy_nodes;
+    Move best_move;
+    int pc = g->pass_counter;
     Hands anchor = g->hands;
     float best_score, score;
-    get_moves(g, moves, &n, &cant_pass);
     if(g->turn){
         best_score = -FLT_MAX;
         for(int i = 0; i < n; i++){
             play_move(g, moves[i]);
-            score = ai_function(g, depth - 1);
-            printf("score of move [%d|%d] %d: %f\n", moves[i].play.left, moves[i].play.right, moves[i].type, score);
+            score = ai_function(g, depth - 1, skip, nodes);
+            scores[i] = score;
             unplay_move(g, moves[i], &anchor, pc);
             if(score > best_score){
                 best_score = score;
@@ -160,8 +206,8 @@ Move best_move(Game *g, int depth, float (*ai_function)(Game *, int)){
         best_score = FLT_MAX;
         for(int i = 0; i < n; i++){
             play_move(g, moves[i]);
-            score = ai_function(g, depth - 1);
-            printf("score of move [%d|%d] %d: %f\n", moves[i].play.left, moves[i].play.right, moves[i].type, score);
+            score = ai_function(g, depth - 1, skip, nodes);
+            scores[i] = score;
             unplay_move(g, moves[i], &anchor, pc);
             if(score < best_score){
                 best_score = score;
@@ -169,6 +215,27 @@ Move best_move(Game *g, int depth, float (*ai_function)(Game *, int)){
             }
         }
     }
-    printf("best score: %f, best move: [%d|%d] %d\n", best_score, best_move.play.left, best_move.play.right, best_move.type);
     return best_move;
+}
+
+Move iterative_deepening(Game *g, Move moves[], int n, int skip, float (*ai_function)(Game *, int, int, int *)){
+    SetConsoleCtrlHandler((PHANDLER_ROUTINE)interrupt_search, TRUE);
+    int depth = 1, nodes = 0, prev_nodes = 0;
+    float scores[n], last_scores[n];
+    Move best = best_move(g, moves, scores, n, depth, skip, &nodes, ai_function), last_best;
+    while(!FALLBACK && prev_nodes < nodes){
+        last_best = best;
+        prev_nodes = nodes;
+        for(int i = 0; i < n; i++)
+            last_scores[i] = scores[i];
+        printf("depth: %d, best move = [%d|%d] %d, nodes: %d\n", depth, last_best.play.left, last_best.play.right, last_best.type, prev_nodes);
+        depth++;
+        nodes = 0;
+        best = best_move(g, moves, scores, n, depth, skip, &nodes, ai_function);
+    }
+    FALLBACK = 0;
+    for(int i = 0; i < n; i++)
+        printf("score of move [%d|%d] %d: %f\n", moves[i].play.left, moves[i].play.right, moves[i].type, last_scores[i]);
+    printf("best move: [%d|%d] %d\n", last_best.play.left, last_best.play.right, best.type);
+    return last_best;
 }

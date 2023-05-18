@@ -24,6 +24,6 @@ typedef struct {
     };
 } Move;
 
-void print_moves(Move moves[], int n);
+void print_playing_moves(Move moves[], int n);
 
 #endif

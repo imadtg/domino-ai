@@ -73,7 +73,7 @@ void print_game(Game *g){
     printf("Pass Counter: %d\n", g->pass_counter);
 }
 
-void get_moves(Game *g, Move moves[MAX], int *n, int *cant_pass){
+void get_playing_moves(Game *g, Move moves[MAX], int *n, int *cant_pass){
     *n = 0;
     *cant_pass = 0;
     if(g->snake.head == NULL){
@@ -114,13 +114,66 @@ void get_moves(Game *g, Move moves[MAX], int *n, int *cant_pass){
     }
 }
 
+void get_perfect_picking_moves(Game *g, Move moves[], int *n){
+    *n = 0;
+    if(g->hands.hand_sizes[NP] == 0)
+        return;
+    for(int i = 0; i < PIPS; i++){
+        for(int j = 0; j <= i; j++){
+            if(possible_possession(NP, &g->hands, i, j)){
+                moves[*n].perfect_pick.left = i;
+                moves[*n].perfect_pick.right = j;
+                moves[*n].type = PERFECT_PICK;
+                (*n)++;
+            }
+        }
+    }
+}
+
+void get_playable_perfect_picking_moves(Game *g, Move moves[], int *n){
+    *n = 0;
+    if(g->hands.hand_sizes[NP] == 0)
+        return;
+    for(int i = 0; i < PIPS; i++){
+        for(int j = 0; j <= i; j++){
+            if(possible_possession(NP, &g->hands, i, j) && playable_domino(&g->snake, i, j)){
+                moves[*n].perfect_pick.left = i;
+                moves[*n].perfect_pick.right = j;
+                moves[*n].type = PERFECT_PICK;
+                (*n)++;
+            }
+        }
+    }
+}
+
+float pick_unplayable_domino_probability_from_moves(Game *g, Move play_perf[], int nplayperf){
+    int nplaysolid = 0, nplayliquid = 0;
+    for(int i = 0; i < nplayperf; i++){
+        if(certain(&g->hands, play_perf[i].perfect_pick.left, play_perf[i].perfect_pick.right))
+            nplaysolid++;
+        else
+            nplayliquid++;
+    }
+    return pick_unplayable_domino_probability(g, g->hands.solid_groups[NP].size - nplaysolid, g->hands.liquid_groups[NP].size - nplayliquid);
+}
+
+float pick_unplayable_domino_probability(Game *g, int n_solid, int n_liquid){ // takes how many unplayable dominoes in each group of the boneyard
+    if(g->hands.hand_sizes[NP] == 0)
+        return 0.0f;
+    float solid_prob = (float) n_solid / g->hands.hand_sizes[NP];
+    float liquid_prob = 0.0f;
+    if(g->hands.solid_groups[NP].size != 0)
+        liquid_prob = (float) (n_liquid * (g->hands.hand_sizes[NP] - g->hands.solid_groups[NP].size)) / (g->hands.liquid_groups[NP].size * g->hands.hand_sizes[NP]);
+    return liquid_prob + solid_prob;
+}
+
 float pass_probability_from_num_moves(Game *g, int n){
     if(g->snake.head == NULL)
         return 0.0f;
     return pass_probability(g, n - possible_possession(g->turn, &g->hands, g->snake.head->domino.right, g->snake.tail->domino.left));
 }
 
-float pass_probability(Game *g, int n){// n is the number of distinct playable dominoes by the player
+float pass_probability(Game *g, int n){ // n is the number of distinct playable dominoes by the player
     if(n <= 0)
         return 1.0f;
     int k = g->hands.hand_sizes[g->turn] - g->hands.solid_groups[g->turn].size; // number of unknown dominoes
