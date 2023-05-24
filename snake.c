@@ -10,10 +10,28 @@ void print_snake(Snake *snake) {
     printf("\n");
 }
 
+int snake_is_sound(Snake *s){
+    Block *b = s->tail;
+    while(b!=NULL){
+        if(b->right_block!=NULL && b->right_block->left_block != b)
+            return 0;
+        b = b->right_block;
+    }
+    b = s->head;
+    while(b!=NULL){
+        if(b->left_block!=NULL && b->left_block->right_block != b)
+            return 0;
+        b = b->left_block;
+    }
+    return 1;
+}
+
 void add_block(Snake* s, Block *block, enum Type type) {
     if(s->head == NULL){
         s->head = block;
         s->tail = block;
+        s->head->left_block = NULL;
+        s->head->right_block = NULL;
         return;
     }
     switch(type) {
@@ -32,7 +50,7 @@ void add_block(Snake* s, Block *block, enum Type type) {
     }
 }
 
-// remove the block on the head or tail of the snake depending on the head parameter. isolate the block by setting it's own pointers to NULL. don't forget about the case when there is only one block.
+// remove the block on the head or tail of the snake depending on the type parameter. isolate the block by setting it's own pointers to NULL. don't forget about the case when there is only one block.
 void remove_block(Snake* s, enum Type type) {
     if(s->head == s->tail){
         s->head = NULL;

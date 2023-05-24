@@ -30,7 +30,7 @@ int is_passing(Game *g, int player);
 
 // Functions for printing the game and getting possible moves
 void print_game(Game *g);
-void get_playing_moves(Game *g, Move moves[MAX], int *n, int *cant_pass);
+void get_playing_moves(Game *g, Move moves[MAX_NUM_PLY_MOVE], int *n, int *cant_pass);
 void get_perfect_picking_moves(Game *g, Move moves[], int *n);
 void get_playable_perfect_picking_moves(Game *g, Move moves[], int *n);
 

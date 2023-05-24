@@ -47,16 +47,18 @@ void process_absence(Game *g, Hands *anchor, float *pass_score, float *prob, int
                 *pass_score = ai_function(g, depth, skip, nodes);
                 undo_imperfect_pick(g, anchor);
             } else {
+                absence_event(g);
                 if(skip){ // to reduce the branching factor, we can estimate the score by the average weight difference after picking from the boneyard
-                    absence_event(g);
                     *pass_score = pick_loss_evaluation(g);
-                    undo_absence_event(g, anchor);
                 } else {
                     if(hand_is_solid(NP, &g->hands) || hand_is_solid(g->turn, &g->hands)){ // do not introduce uncertainty by doing imperfect picks if either boneyard or hand is known.
-                        Move perfect_picking_moves[g->hands.hand_sizes[NP]];
+                        Move perfect_picking_moves[g->hands.liquid_groups[NP].size + g->hands.solid_groups[NP].size];
                         int nperf;
                         get_perfect_picking_moves(g, perfect_picking_moves, &nperf);
                         *pass_score = 0;
+                        if(nperf == 0){
+                            printf("no perfect move\n");
+                        }
                         for(int i = 0; i < nperf; i++){
                             perfect_pick(g, perfect_picking_moves[i]);
                             *pass_score += ai_function(g, depth - 1, skip, nodes);
@@ -64,10 +66,13 @@ void process_absence(Game *g, Hands *anchor, float *pass_score, float *prob, int
                         }
                         *pass_score /= nperf;
                     } else {
-                        Move playable_perfect_picking_moves[g->hands.hand_sizes[NP]];
+                        Move playable_perfect_picking_moves[MAX_NUM_PLY_MOVE];
                         int nplayperf;
                         get_playable_perfect_picking_moves(g, playable_perfect_picking_moves, &nplayperf);
                         float unplayable_prob = pick_unplayable_domino_probability_from_moves(g, playable_perfect_picking_moves, nplayperf);
+                        //print_game(g);
+                        //print_picking_moves(playable_perfect_picking_moves, nplayperf);
+                        //printf("Probability of picking unplayable move : %f", unplayable_prob);
                         float pick_playable_score = 0, pick_unplayable_score = 0;
                         for(int i = 0; i < nplayperf; i++){
                             perfect_pick(g, playable_perfect_picking_moves[i]);
@@ -86,6 +91,7 @@ void process_absence(Game *g, Hands *anchor, float *pass_score, float *prob, int
                         *pass_score = unplayable_prob * pick_unplayable_score + (1 - unplayable_prob) * pick_playable_score;
                     }
                 }
+                undo_absence_event(g, anchor);
             }
         } else {
             pass(g);
@@ -104,7 +110,7 @@ float minimax(Game *g, int depth, int skip, int *nodes){
     if(depth == 0)
         return heuristic_evaluation(g);
     int n, cant_pass, pc = g->pass_counter;
-    Move moves[MAX];
+    Move moves[MAX_NUM_PLY_MOVE];
     Hands anchor = g->hands;
     float pass_score = 0, prob = 0, score, best_score;
     get_playing_moves(g, moves, &n, &cant_pass);
@@ -148,7 +154,7 @@ float expectiminimax(Game *g, int depth, int skip, int *nodes){
     if(depth == 0)
         return heuristic_evaluation(g);
     int n, cant_pass, pc = g->pass_counter;
-    Move moves[MAX];
+    Move moves[MAX_NUM_PLY_MOVE];
     Heap move_heap;
     Hands anchor = g->hands;
     float pass_score = 0, prob = 0, score, best_score;
@@ -228,6 +234,8 @@ Move iterative_deepening(Game *g, Move moves[], int n, int skip, float (*ai_func
         prev_nodes = nodes;
         for(int i = 0; i < n; i++)
             last_scores[i] = scores[i];
+        for(int i = 0; i < n; i++)
+            printf("score of move [%d|%d] %d: %f\n", moves[i].play.left, moves[i].play.right, moves[i].type, last_scores[i]);
         printf("depth: %d, best move = [%d|%d] %d, nodes: %d\n", depth, last_best.play.left, last_best.play.right, last_best.type, prev_nodes);
         depth++;
         nodes = 0;

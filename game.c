@@ -47,8 +47,8 @@ int symmetric_non_double_move(Snake *s, Move move) { // tests whether this move 
 }
 
 int playable_domino(Snake *s, int left, int right) {
-    return s->head == NULL || left == s->head->domino.left || left == s->tail->domino.right \
-            || right == s->head->domino.left || right == s->tail->domino.right;
+    return s->head == NULL || left == s->head->domino.right || left == s->tail->domino.left \
+            || right == s->head->domino.right || right == s->tail->domino.left;
 }
 
 int is_passing(Game *g, int player){ // test whether a player will pass if given the turn for certain
@@ -73,7 +73,7 @@ void print_game(Game *g){
     printf("Pass Counter: %d\n", g->pass_counter);
 }
 
-void get_playing_moves(Game *g, Move moves[MAX], int *n, int *cant_pass){
+void get_playing_moves(Game *g, Move moves[MAX_NUM_PLY_MOVE], int *n, int *cant_pass){
     *n = 0;
     *cant_pass = 0;
     if(g->snake.head == NULL){
@@ -128,6 +128,12 @@ void get_perfect_picking_moves(Game *g, Move moves[], int *n){
             }
         }
     }
+}
+
+void deb(Game *g){
+    int n;
+    Move perf[30];
+    get_playable_perfect_picking_moves(g, perf, &n);
 }
 
 void get_playable_perfect_picking_moves(Game *g, Move moves[], int *n){
