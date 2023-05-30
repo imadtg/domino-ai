@@ -1,2 +1,2 @@
 # domino-ai
-2 player boneyard dominoes AI written in C using minimax algorithms.
+2 player drawing dominoes game AI written in C using minimax algorithms.
