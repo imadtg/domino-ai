@@ -17,7 +17,7 @@ void start(){
     int n, cant_pass, ai_play, skip, depth;
     float (*ai_function)(Game *, int, int, int *);
     enum Mode ai_mode;
-    Move moves[MAX_NUM_PLY_MOVE], move;
+    Move moves[DCOUNT], move;
     do {
         print_game(g);
         get_playing_moves(g, moves, &n, &cant_pass);
