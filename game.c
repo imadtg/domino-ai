@@ -64,9 +64,7 @@ int is_passing(Game *g, int player){ // test whether a player will pass if given
 void print_game(Game *g){
     printf("-------------------------------------------------------------\n");
     // print the hands then the snake.
-    for(int i = 0; i <= NP; i++) {
-        print_hand(&g->hands, i);
-    }
+    print_hands(&g->hands);
     print_snake(&g->snake);
     // print whose turn it is and the pass counter. also print possible_move moves for the current player.
     printf("Turn: %d\n", g->turn);
@@ -164,11 +162,11 @@ float pick_unplayable_domino_probability_from_moves(Game *g, Move play_perf[], i
 }
 
 float pick_unplayable_domino_probability(Game *g, int n_solid, int n_liquid){ // takes how many unplayable dominoes in each group of the boneyard
-    if(g->hands.hand_sizes[NP] == 0)
+    if(!boneyard_is_pickable(&g->hands))
         return 0.0f;
     float solid_prob = (float) n_solid / g->hands.hand_sizes[NP];
     float liquid_prob = 0.0f;
-    if(g->hands.solid_groups[NP].size != 0)
+    if(g->hands.liquid_groups[NP].size != 0)
         liquid_prob = (float) (n_liquid * (g->hands.hand_sizes[NP] - g->hands.solid_groups[NP].size)) / (g->hands.liquid_groups[NP].size * g->hands.hand_sizes[NP]);
     return liquid_prob + solid_prob;
 }
@@ -176,7 +174,7 @@ float pick_unplayable_domino_probability(Game *g, int n_solid, int n_liquid){ //
 float pass_probability_from_num_moves(Game *g, int n){
     if(g->snake.head == NULL)
         return 0.0f;
-    return pass_probability(g, n - possible_possession(g->turn, &g->hands, g->snake.head->domino.right, g->snake.tail->domino.left));
+    return pass_probability(g, n - !!possible_possession(g->turn, &g->hands, g->snake.head->domino.right, g->snake.tail->domino.left));
 }
 
 float pass_probability(Game *g, int n){ // n is the number of distinct playable dominoes by the player
@@ -263,7 +261,7 @@ void pass(Game *g){
 }
 
 void undo_pass(Game *g, Hands *prev){
-    g->turn = (g->turn - 1) % NP;
+    g->turn = (g->turn - 1 + NP) % NP;
     g->pass_counter--;
     g->hands = *prev;
 }
@@ -272,6 +270,7 @@ void perfect_pick(Game *g, Move move){
     if(!hand_is_solid(g->turn, &g->hands))
         absent(g);
     set_sole_owner_pick(g->turn, &g->hands, move.perfect_pick.left, move.perfect_pick.right);
+    
     g->hands.hand_sizes[g->turn]++;
     g->hands.hand_sizes[NP]--;
     emit_collapse(&g->hands);

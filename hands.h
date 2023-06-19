@@ -62,6 +62,7 @@ int sole_owner(Hands *hands, int i, int j);
 int hand_is_solid(int player, Hands *hands);
 int hand_is_liquid(int player, Hands *hands);
 int hand_is_empty(int player, Hands *hands);
+int boneyard_is_pickable(Hands *hands);
 
 // Ownership modifications after moves/start
 void set_sole_owner_pick(int player, Hands *hands, int i, int j);
@@ -86,6 +87,7 @@ float weight(Hands *hands, int player);
 
 // Hand print
 void print_hand(Hands *hands, int player);
+void print_hands(Hands *hands);
 
 // Hand initialization
 void get_hand_sizes(Hands *hands);
