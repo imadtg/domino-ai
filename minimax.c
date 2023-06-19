@@ -1,6 +1,6 @@
 #include "minimax.h"
 
-int FALLBACK = 0;
+volatile int FALLBACK = 0;
 
 WINBOOL interrupt_search(DWORD ctrl_type){
     if (ctrl_type == CTRL_C_EVENT) {
@@ -38,7 +38,7 @@ float pick_loss_evaluation(Game *g){ // the loss of the player who's turn it is 
 void process_absence(Game *g, Hands *anchor, float *pass_score, float *prob, int n, int depth, int skip, int *nodes, float (*ai_function)(Game *, int, int, int *)){
     *prob = pass_probability_from_num_moves(g, n);
     if(*prob != 0){
-        if(!hand_is_empty(NP, &g->hands)){ // we have to handle picking from the boneyard
+        if(boneyard_is_pickable(&g->hands)){ // we have to handle picking from the boneyard
             if(is_passing(g, NP)){ // there is no playable domino left in the boneyard, we will pick it all.
                 Move pick_all_of_boneyard;
                 pick_all_of_boneyard.type = IMPERFECT_PICK;
@@ -65,7 +65,7 @@ void process_absence(Game *g, Hands *anchor, float *pass_score, float *prob, int
                             undo_perfect_pick(g, anchor);
                         }
                         *pass_score /= nperf;
-                    } else {
+                    } else { // TODO: explore imperfect picks of all sizes followed by all playable perfect picks.
                         Move playable_perfect_picking_moves[MAX_NUM_PLY_MOVE];
                         int nplayperf;
                         get_playable_perfect_picking_moves(g, playable_perfect_picking_moves, &nplayperf);
@@ -79,13 +79,14 @@ void process_absence(Game *g, Hands *anchor, float *pass_score, float *prob, int
                             pick_playable_score += ai_function(g, depth - 1, skip, nodes);
                             undo_perfect_pick(g, anchor);
                         }
+                        if(!nplayperf) printf("uh oh");
                         pick_playable_score /= nplayperf;
                         if(unplayable_prob != 0){
                             Move pick_unplayable;
                             pick_unplayable.type = IMPERFECT_PICK;
                             pick_unplayable.imperfect_pick.count = 1;
                             imperfect_pick(g, pick_unplayable);
-                            pick_unplayable_score = ai_function(g, depth, skip, nodes);
+                            pick_unplayable_score = ai_function(g, depth - 1 ,skip, nodes);
                             undo_imperfect_pick(g, anchor);
                         }
                         *pass_score = unplayable_prob * pick_unplayable_score + (1 - unplayable_prob) * pick_playable_score;

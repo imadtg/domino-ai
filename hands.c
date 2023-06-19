@@ -183,6 +183,14 @@ int hand_is_empty(int player, Hands *hands){
     return hands->hand_sizes[player] == 0;
 }
 
+int boneyard_is_pickable(Hands *hands){
+#if BLOCK
+    return 0;
+#else
+    return !hand_is_empty(NP, hands);
+#endif
+}
+
 // perfect boneyard picks
 void set_sole_owner_pick(int player, Hands *hands, int i, int j){ // needs not be optimized
     if(certain(hands, i, j)){
@@ -288,6 +296,8 @@ void collapse_hand_evaporate(int player, Hands *hands){
 
 void cascade_collapse(int player, Hands *hands){
     if(!collapse_hand(player, hands)) return;
+    int y = 2;
+    int x = *(int *)((hands->liquid_groups[0].size >= 0) * (unsigned long long) &y);
     for(int p = 0; p <= NP; p++){
         if(p != player)
             cascade_collapse(p, hands);
@@ -348,6 +358,12 @@ void print_hand(Hands *hands, int player) {
     int tsw = calc_solid_weight(player, hands);
     float tlw = calc_true_liquid_weight(player, hands);
     printf("\nsizes: liquid = %d, solid = %d, true = %d, weights: %d (%d)+ %f (%f)= %f\n", hands->liquid_groups[player].size, hands->solid_groups[player].size, hands->hand_sizes[player], tsw, sw, tlw, lw, weight(hands, player));
+}
+
+void print_hands(Hands *hands){
+    for(int i = 0; i <= NP; i++) {
+        print_hand(hands, i);
+    }
 }
 
 void get_hand_sizes(Hands *hands) {

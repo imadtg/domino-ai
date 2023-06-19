@@ -8,7 +8,7 @@
 
 enum Mode {PESSIMIST, EXPECT};
 
-extern int FALLBACK;
+extern volatile int FALLBACK;
 
 WINBOOL interrupt_search(DWORD ctrl_type);
 float endgame_evaluation(Game *g);

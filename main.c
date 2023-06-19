@@ -14,32 +14,40 @@ void start(){
     printf("Game starts with turn : ");
     fflush(stdout);
     scanf("%d", &g->turn);
-    int n, cant_pass, ai_play, skip, depth;
+    int n, nplypck, npck, cant_pass, ai_play, skip, depth;
     float (*ai_function)(Game *, int, int, int *);
+    float unplayable_prob, pass_prob;
     enum Mode ai_mode;
-    Move moves[DCOUNT], move;
+    Move moves[DCOUNT], playable_picking_moves[DCOUNT], picking_moves[DCOUNT], move;
     do {
         print_game(g);
         get_playing_moves(g, moves, &n, &cant_pass);
         print_playing_moves(moves, n);
         printf("%d moves\n", n);
+        get_playable_perfect_picking_moves(g, playable_picking_moves, &nplypck);
+        get_perfect_picking_moves(g, picking_moves, &npck);
+        pass_prob = pass_probability_from_num_moves(g, n);
+        pass_probability_from_num_moves(g, n);
+        print_picking_moves(picking_moves, npck);
+        print_picking_moves(playable_picking_moves, nplypck);
+        printf("pass prob = %f\n", pass_prob);
+        unplayable_prob = pick_unplayable_domino_probability_from_moves(g, playable_picking_moves, nplypck);
+        printf("unplayable pick prob = %f\n", unplayable_prob);
         if(cant_pass) printf("cant pass\n");
         if(n == 0){
-            if(g->hands.hand_sizes[NP]){
-                if(is_passing(g, NP)){
-                    Move pick_all_of_boneyard;
-                    pick_all_of_boneyard.type = IMPERFECT_PICK;
-                    pick_all_of_boneyard.imperfect_pick.count = g->hands.hand_sizes[NP];
-                    imperfect_pick(g, pick_all_of_boneyard);
-                    continue;
-                }
-                else if(g->hands.hand_sizes[NP] == 1){
-                    Move pick_one_of_boneyard;
-                    int dummy;
-                    pick_one_of_boneyard.type = PERFECT_PICK;
-                    get_perfect_picking_moves(g, &pick_one_of_boneyard, &dummy); // VERY UNSAFE
-                    perfect_pick(g, pick_one_of_boneyard);
-                    continue;
+            if(boneyard_is_pickable(&g->hands)){
+                if(hand_is_solid(NP, &g->hands) || hand_is_liquid(g->turn, &g->hands)){
+                    if(is_passing(g, NP)){
+                        Move pick_all_of_boneyard;
+                        pick_all_of_boneyard.type = IMPERFECT_PICK;
+                        pick_all_of_boneyard.imperfect_pick.count = g->hands.hand_sizes[NP];
+                        imperfect_pick(g, pick_all_of_boneyard);
+                        continue;
+                    }
+                    else if(g->hands.hand_sizes[NP] == 1){
+                        perfect_pick(g, picking_moves[0]);
+                        continue;
+                    }
                 }
             } else {
                 pass(g);
@@ -52,9 +60,9 @@ void start(){
         if(!cant_pass && n == 0)
             printf("give move type (perf pick = %d, imp pick = %d, pass = %d): ", PERFECT_PICK, IMPERFECT_PICK, PASS);
         else if(!cant_pass)
-            printf("give move type (left = %d, right = %d, perf pick = %d, imp pick = %d, pass = %d)(AI def): ", LEFT, RIGHT, PERFECT_PICK, IMPERFECT_PICK, PASS);
+            printf("give move type (left = %d, right = %d, perf pick = %d, imp pick = %d, pass = %d)(AI = -1): ", LEFT, RIGHT, PERFECT_PICK, IMPERFECT_PICK, PASS);
         else
-            printf("give move type (left = %d, right = %d)(AI def): ", LEFT, RIGHT);
+            printf("give move type (left = %d, right = %d)(AI = -1): ", LEFT, RIGHT);
         scanf("%d", &move.type);
         switch(move.type){
         case LEFT:
@@ -67,7 +75,8 @@ void start(){
             }
             break;
         case PERFECT_PICK:
-            if(cant_pass){
+            if(cant_pass || !boneyard_is_pickable(&g->hands)){
+                fflush(stdin);
                 printf("invalid move\n");
                 break;
             }
@@ -78,7 +87,8 @@ void start(){
                 printf("invalid move\n");
             break;
         case IMPERFECT_PICK:
-            if(cant_pass){
+            if(cant_pass || !boneyard_is_pickable(&g->hands)){
+                fflush(stdin);
                 printf("invalid move\n");
                 break;
             }
@@ -95,10 +105,9 @@ void start(){
             }
             pass(g);
             break;
-        default: // AI move
+        case -1: // AI move, don't know if i should enumerate in enum Move.
             if(n == 0){
-                printf("reading 4 ints for consistency:");
-                scanf("%*d %*d %*d %*d");
+                fflush(stdin);
                 printf("no moves to choose AI move from\n");
                 break;
             }
@@ -132,7 +141,9 @@ void start(){
 
 int main(){
     init_fact();
-    start();
-    getch();
+    while(1){
+        start();
+        getch();
+    }
     return 0;
 }
