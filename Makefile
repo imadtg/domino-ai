@@ -5,13 +5,13 @@
 # Updated to link into a single executable
 #
 
-CC=gcc
+CC=emcc
 RM=rm -f
 CFLAGS=-c -Wall -O3
-LDFLAGS=-lm -mconsole
+LDFLAGS=-lm -mconsole --shell-file html_template/shell_minimal.html -sNO_EXIT_RUNTIME -sEXPORTED_RUNTIME_METHODS=ccall,cwrap -sNO_INVOKE_RUN -sASSERTIONS -sEXPORT_ALL -sLINKABLE
 SOURCES=$(wildcard *.c)
 OBJECTS=$(SOURCES:.c=.o)
-EXECUTABLE=dominoai  # Name your executable
+EXECUTABLE=build/index.html  # Name your executable
 
 .PHONY: all clean
 

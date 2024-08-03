@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Emscripten-Generated Code</title>
+    <style>
+      .emscripten {
+        padding-right: 0;
+        margin-left: auto;
+        margin-right: auto;
+        display: block;
+      }
+      textarea.emscripten {
+        font-family: monospace;
+        width: 80%;
+      }
+      div.emscripten {
+        text-align: center;
+      }
+      div.emscripten_border {
+        border: 1px solid black;
+      }
+      /* the canvas *must not* have any border or padding, or mouse coords will be wrong */
+      canvas.emscripten {
+        border: 0px none;
+        background-color: black;
+      }
+
+      .spinner {
+        height: 50px;
+        width: 50px;
+        margin: 0px auto;
+        -webkit-animation: rotation 0.8s linear infinite;
+        -moz-animation: rotation 0.8s linear infinite;
+        -o-animation: rotation 0.8s linear infinite;
+        animation: rotation 0.8s linear infinite;
+        border-left: 10px solid rgb(0, 150, 240);
+        border-right: 10px solid rgb(0, 150, 240);
+        border-bottom: 10px solid rgb(0, 150, 240);
+        border-top: 10px solid rgb(100, 0, 200);
+        border-radius: 100%;
+        background-color: rgb(200, 100, 250);
+      }
+      @-webkit-keyframes rotation {
+        from {
+          -webkit-transform: rotate(0deg);
+        }
+        to {
+          -webkit-transform: rotate(360deg);
+        }
+      }
+      @-moz-keyframes rotation {
+        from {
+          -moz-transform: rotate(0deg);
+        }
+        to {
+          -moz-transform: rotate(360deg);
+        }
+      }
+      @-o-keyframes rotation {
+        from {
+          -o-transform: rotate(0deg);
+        }
+        to {
+          -o-transform: rotate(360deg);
+        }
+      }
+      @keyframes rotation {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <hr />
+    <figure style="overflow: visible" id="spinner">
+      <div class="spinner"></div>
+      <center style="margin-top: 0.5em"><strong>emscripten</strong></center>
+    </figure>
+    <div class="emscripten" id="status">Downloading...</div>
+    <div class="emscripten">
+      <progress value="0" max="100" id="progress" hidden="1"></progress>
+    </div>
+    <div class="emscripten_border">
+      <canvas
+        class="emscripten"
+        id="canvas"
+        oncontextmenu="event.preventDefault()"
+        tabindex="-1"
+      ></canvas>
+    </div>
+    <hr />
+    <div class="emscripten">
+      <input type="checkbox" id="resize" />Resize canvas
+      <input type="checkbox" id="pointerLock" checked />Lock/hide mouse pointer
+      &nbsp;&nbsp;&nbsp;
+      <input
+        type="button"
+        value="Fullscreen"
+        onclick="Module.requestFullscreen(document.getElementById('pointerLock').checked, 
+                                                                                document.getElementById('resize').checked)"
+      />
+    </div>
+
+    <hr />
+    <textarea class="emscripten" id="output" rows="8"></textarea>
+    <hr />
+    <script type="text/javascript">
+      var statusElement = document.getElementById("status");
+      var progressElement = document.getElementById("progress");
+      var spinnerElement = document.getElementById("spinner");
+
+      var Module = {
+        print: (function () {
+          var element = document.getElementById("output");
+          if (element) element.value = ""; // clear browser cache
+          return (...args) => {
+            var text = args.join(" ");
+            // These replacements are necessary if you render to raw HTML
+            //text = text.replace(/&/g, "&amp;");
+            //text = text.replace(/</g, "&lt;");
+            //text = text.replace(/>/g, "&gt;");
+            //text = text.replace('\n', '<br>', 'g');
+            console.log(text);
+            if (element) {
+              element.value += text + "\n";
+              element.scrollTop = element.scrollHeight; // focus on bottom
+            }
+          };
+        })(),
+        setStatus: (text) => {
+          if (!Module.setStatus.last)
+            Module.setStatus.last = { time: Date.now(), text: "" };
+          if (text === Module.setStatus.last.text) return;
+          var m = text.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+)\)/);
+          var now = Date.now();
+          if (m && now - Module.setStatus.last.time < 30) return; // if this is a progress update, skip it if too soon
+          Module.setStatus.last.time = now;
+          Module.setStatus.last.text = text;
+          if (m) {
+            text = m[1];
+            progressElement.value = parseInt(m[2]) * 100;
+            progressElement.max = parseInt(m[4]) * 100;
+            progressElement.hidden = false;
+            spinnerElement.hidden = false;
+          } else {
+            progressElement.value = null;
+            progressElement.max = null;
+            progressElement.hidden = true;
+            if (!text) spinnerElement.hidden = true;
+          }
+          statusElement.innerHTML = text;
+        },
+        totalDependencies: 0,
+        monitorRunDependencies: (left) => {
+          this.totalDependencies = Math.max(this.totalDependencies, left);
+          Module.setStatus(
+            left
+              ? "Preparing... (" +
+                  (this.totalDependencies - left) +
+                  "/" +
+                  this.totalDependencies +
+                  ")"
+              : "All downloads complete."
+          );
+        },
+      };
+      Module.setStatus("Downloading...");
+      window.onerror = () => {
+        Module.setStatus("Exception thrown, see JavaScript console");
+        spinnerElement.style.display = "none";
+        Module.setStatus = (text) => {
+          if (text) console.error("[post-exception status] " + text);
+        };
+      };
+    </script>
+    {{{ SCRIPT }}}
+    <script>
+      const range = (start, end, step = 1) => {
+        let output = [];
+        if (typeof end === "undefined") {
+          end = start;
+          start = 0;
+        }
+        for (let i = start; i < end; i += step) {
+          output.push(i);
+        }
+        return output;
+      };
+
+      function deref_c_int(ptr) {
+        return Module._deref_int(ptr);
+      }
+
+      function alloc_c_int() {
+        return Module.alloc_int;
+      }
+      const LEFT = 0;
+      const RIGHT = 1;
+      const PERFECT_PICK = 2;
+      const IMPERFECT_PICK = 3;
+      const PASS = 4;
+      function play() {
+        const numberOfPlayers = Module._get_number_of_players();
+        const pips = Module._get_pips();
+        const currentPlayer = Module._get_current_player();
+        const game = Module._alloc_game();
+        Module._init_game(game);
+        const hands = Module._get_hands(game);
+        const snake = Module._get_snake(game);
+        const handSizes = range(numberOfPlayers + 1).map((player) =>
+          parseInt(
+            window.prompt(
+              `Give the size of the hand of the ${
+                player < numberOfPlayers ? `${player} player` : "boneyard"
+              }:`
+            )
+          )
+        );
+        handSizes.forEach((size, player) =>
+          Module._set_hand_size(game, player, size)
+        );
+        const currentPlayerOwns = range(pips).map(() =>
+          range(pips).map(() => false)
+        );
+        console.log(currentPlayerOwns);
+        range(handSizes[currentPlayer]).forEach((pieceNumber) => {
+          let left = parseInt(
+            window.prompt(`Give the left of piece ${pieceNumber}`)
+          );
+          let right = parseInt(
+            window.prompt(`Give the right of piece ${pieceNumber}`)
+          );
+          currentPlayerOwns[left][right] = true;
+          currentPlayerOwns[right][left] = true;
+        });
+        console.log(currentPlayerOwns);
+        range(pips).forEach((left) =>
+          range(left, pips).forEach((right) => {
+            if (currentPlayerOwns[left][right]) {
+              console.log(`Collapsing [${left}|${right}] onto ${currentPlayer}`)
+              Module._collapse_piece(currentPlayer, hands, left, right);
+            } else {
+              console.log(`Absenting [${left}|${right}] from ${currentPlayer}`)
+              Module._absent_piece(currentPlayer, hands, left, right);
+            }
+          })
+        );
+        Module._emit_collapse(hands);
+        Module._set_turn(game, parseInt(window.prompt("Which player starts?")));
+
+        const cantPassPtr = alloc_c_int();
+
+        const numberOfPlayingMovesPtr = alloc_c_int();
+        const playingMovesArrPtr = Module._alloc_max_move_arr();
+
+        const numberOfPickingMovesPtr = alloc_c_int();
+        const pickingMovesArrPtr = Module._alloc_max_move_arr();
+
+        const numberOfPlayablePickingMovesPtr = alloc_c_int();
+        const playablePickingMovesArrPtr = Module._alloc_max_move_arr();
+
+        const Move = Module._alloc_move();
+
+        while (!Module._over(game)) {
+          let turn = Module._get_turn(game);
+          Module._print_game(game);
+          Module._get_playing_moves(
+            game,
+            playingMovesArrPtr,
+            numberOfPlayingMovesPtr,
+            cantPassPtr
+          );
+          Module._print_playing_moves(
+            playingMovesArrPtr,
+            deref_c_int(numberOfPlayingMovesPtr)
+          );
+          Module.print(deref_c_int(numberOfPlayingMovesPtr), "moves");
+          Module._get_playable_perfect_picking_moves(
+            game,
+            playablePickingMovesArrPtr,
+            numberOfPlayablePickingMovesPtr
+          );
+          Module._get_perfect_picking_moves(
+            game,
+            pickingMovesArrPtr,
+            numberOfPickingMovesPtr
+          );
+          let passProbability = Module._pass_probability_from_num_moves(
+            game,
+            deref_c_int(numberOfPlayingMovesPtr)
+          );
+          Module._print_picking_moves(
+            pickingMovesArrPtr,
+            numberOfPickingMovesPtr
+          );
+          Module._print_picking_moves(
+            playablePickingMovesArrPtr,
+            numberOfPlayablePickingMovesPtr
+          );
+          Module.print("pass prob = ", passProbability);
+          let unplayablePickProbability =
+            Module._pick_unplayable_domino_probability_from_moves(
+              game,
+              playablePickingMovesArrPtr,
+              numberOfPlayablePickingMovesPtr
+            ); // this is a conditional probability and assumes player will pick
+          Module.print("unplayable pick prob = ", unplayablePickProbability);
+          if (deref_c_int(cantPassPtr)) {
+            Module.print("cant pass");
+          }
+          if (deref_c_int(numberOfPlayingMovesPtr) === 0) {
+            if (Module._boneyard_is_pickable(hands)) {
+              if (
+                Module._hand_is_solid(numberOfPlayers, hands) ||
+                Module._hand_is_liquid(turn, hands)
+              ) {
+                if (Module._is_passing(game, numberOfPlayers)) {
+                  Module._pick_all_of_boneyard(game);
+                  continue;
+                } else if (Module._get_hand_size(game, numberOfPlayers) === 1) {
+                  Module._perfect_pick_by_pointer(
+                    game,
+                    Module._get_move_by_index(pickingMovesArrPtr, 0)
+                  );
+                  continue;
+                }
+              }
+            } else {
+              Module._pass(game);
+              continue;
+            }
+          } else if (
+            deref_c_int(cantPassPtr) &&
+            deref_c_int(numberOfPlayingMovesPtr) === 1
+          ) {
+            Module._play_move_by_pointer(
+              game,
+              Module._get_move_by_index(playingMovesArrPtr, 0)
+            );
+            continue;
+          }
+          let moveType;
+          if (
+            !deref_c_int(cantPassPtr) &&
+            deref_c_int(numberOfPlayingMovesPtr) === 0
+          )
+            moveType = parseInt(
+              window.prompt(
+                `give move type (perf pick = ${PERFECT_PICK}, imp pick = ${IMPERFECT_PICK}, pass = ${PASS}): `
+              )
+            );
+          else if (!deref_c_int(cantPassPtr))
+            moveType = parseInt(
+              window.prompt(
+                `give move type (left = ${LEFT}, right = ${RIGHT}, perf pick = ${PERFECT_PICK}, imp pick = ${IMPERFECT_PICK}, pass = ${PASS})(AI = -1): `
+              )
+            );
+          else
+            moveType = parseInt(
+              window.prompt(
+                `give move type (left = ${LEFT}, right = ${RIGHT})(AI = -1): `
+              )
+            );
+          switch (moveType) {
+            case LEFT:
+            case RIGHT: {
+              let leftPip = parseInt(
+                window.prompt("Give left pip of domino to play")
+              );
+              let rightPip = parseInt(
+                window.prompt("Give right pip of domino to play")
+              );
+              if (
+                Module._playable_move(snake, moveType, leftPip, rightPip) &&
+                Module._possible_possession(turn, hands, leftPip, rightPip)
+              ) {
+                Module._populate_move_from_components(
+                  move,
+                  moveType,
+                  leftPip,
+                  rightPip
+                );
+                Module._play_move_by_pointer(game, move);
+              } else {
+                Module.print("invalid move");
+              }
+              break;
+            }
+            case PERFECT_PICK: {
+              if (
+                deref_c_int(cantPassPtr) ||
+                !Module._boneyard_is_pickable(hands)
+              ) {
+                Module.print("invalid move");
+                break;
+              }
+              let leftPip = parseInt(
+                window.prompt("Give left pip of domino to pick")
+              );
+              let rightPip = parseInt(
+                window.prompt("Give right pip of domino to pick")
+              );
+              if (
+                Module._possible_possession(
+                  numberOfPlayers,
+                  hands,
+                  leftPip,
+                  rightPip
+                )
+              ) {
+                Module._populate_move_from_components(
+                  move,
+                  moveType,
+                  leftPip,
+                  rightPip
+                );
+                Module._perfect_pick_by_pointer(game, move);
+              } else Module.print("invalid move");
+              break;
+            }
+            case IMPERFECT_PICK: {
+              if (deref_c_int(cantPassPtr) || !boneyard_is_pickable(hands)) {
+                Module.print("invalid move");
+                break;
+              }
+              let amount = parseInt(window.prompt("Give amount to pick"));
+              if (
+                amount > 0 &&
+                amount <= Module._get_hand_size(numberOfPlayers)
+              ) {
+                Module._populate_imperfect_picking_move(move, amount);
+                Module._perfect_pick_by_pointer(game, move);
+              } else Module.print("invalid move");
+              break;
+            }
+            case PASS: {
+              if (deref_c_int(cantPassPtr)) {
+                Module.print("invalid move");
+                break;
+              }
+              Module._pass(game);
+              break;
+            }
+            case -1: {
+              /*// AI move, don't know if i should enumerate in enum Move.
+            if(n == 0){
+                Module.print("no moves to choose AI move from");
+                break;
+            }
+            printf("give ai mode (pessimist = %d, expect = %d): ", PESSIMIST, EXPECT);
+            scanf("%d", &ai_mode);
+            printf("skip exploring picking positions?: ");
+            scanf("%d", &skip);
+            printf("give depth of search (0 is iterative deepening (windows only), negative is infinite): ");
+            scanf("%d", &depth);
+            switch(ai_mode){
+            case PESSIMIST:
+                ai_function = minimax;
+                break;
+            case EXPECT:
+                ai_function = expectiminimax;
+                break;
+            }
+            if(depth != 0) move = best_move(g, moves, NULL, n, depth, skip, NULL, ai_function);
+            else move = iterative_deepening(g, moves, n, skip, ai_function);
+            if(depth == 0){
+                printf("iterative deepening is only available in windows\n");
+                break;
+            }
+            move = best_move(g, moves, NULL, n, depth, skip, NULL, ai_function);
+
+            printf("play the move?: ");
+            scanf("%d", &ai_play);
+            printf("\n");
+            if(ai_play){
+                play_move(g, move);
+            }*/
+            }
+          }
+        }
+        Module._print_game(game);
+        Module.print("game over, score:", Module._endgame_evaluation(game));
+      }
+    </script>
+    <button onclick="play();">Click me!</button>
+  </body>
+</html>
