@@ -1,7 +1,6 @@
 #ifndef CST_H
 #define CST_H
 #include <stdio.h>
-#include <conio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <float.h>

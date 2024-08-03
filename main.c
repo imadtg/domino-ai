@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <conio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <float.h>
@@ -115,7 +114,7 @@ void start(){
             scanf("%d", &ai_mode);
             printf("skip exploring picking positions?: ");
             scanf("%d", &skip);
-            printf("give depth of search (0 is iterative deepening, negative is infinite): ");
+            printf("give depth of search (0 is iterative deepening (windows only), negative is infinite): ");
             scanf("%d", &depth);
             switch(ai_mode){
             case PESSIMIST:
@@ -125,8 +124,17 @@ void start(){
                 ai_function = expectiminimax;
                 break;
             }
+            #ifdef _WIN32
             if(depth != 0) move = best_move(g, moves, NULL, n, depth, skip, NULL, ai_function);
             else move = iterative_deepening(g, moves, n, skip, ai_function);
+            #else
+            if(depth == 0){
+                printf("iterative deepening is only available in windows\n");
+                break;
+            }
+            move = best_move(g, moves, NULL, n, depth, skip, NULL, ai_function);
+            #endif
+
             printf("play the move?: ");
             scanf("%d", &ai_play);
             printf("\n");
@@ -143,7 +151,7 @@ int main(){
     init_fact();
     while(1){
         start();
-        getch();
+        getchar();
     }
     return 0;
 }

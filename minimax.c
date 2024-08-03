@@ -1,5 +1,7 @@
 #include "minimax.h"
 
+
+#ifdef _WIN32
 volatile int FALLBACK = 0;
 
 WINBOOL interrupt_search(DWORD ctrl_type){
@@ -9,6 +11,19 @@ WINBOOL interrupt_search(DWORD ctrl_type){
         return TRUE;
     }
     return FALSE;
+}
+#endif
+
+float max(float x, float y){
+    if(x > y)
+        return x;
+    return y;
+}
+
+float min(float x, float y){
+    if(x < y)
+        return x;
+    return y;
 }
 
 float endgame_evaluation(Game *g){
@@ -103,8 +118,10 @@ void process_absence(Game *g, Hands *anchor, float *pass_score, float *prob, int
 }
 
 float minimax(Game *g, int depth, int skip, int *nodes){
+    #ifdef _WIN32
     if(FALLBACK)
         return 0;
+    #endif
     (*nodes)++;
     if(over(g))
         return endgame_evaluation(g);
@@ -147,8 +164,10 @@ float expected_score_from_heap(Game *g, Heap *h, int liquid_size, int collapsing
 }
 
 float expectiminimax(Game *g, int depth, int skip, int *nodes){
+    #ifdef _WIN32
     if(FALLBACK)
         return 0;
+    #endif
     (*nodes)++;
     if(over(g))
         return endgame_evaluation(g);
@@ -225,6 +244,7 @@ Move best_move(Game *g, Move moves[], float scores[], int n, int depth, int skip
     return best_move;
 }
 
+#ifdef _WIN32
 Move iterative_deepening(Game *g, Move moves[], int n, int skip, float (*ai_function)(Game *, int, int, int *)){
     SetConsoleCtrlHandler((PHANDLER_ROUTINE)interrupt_search, TRUE);
     int depth = 1, nodes = 0, prev_nodes = 0;
@@ -248,3 +268,4 @@ Move iterative_deepening(Game *g, Move moves[], int n, int skip, float (*ai_func
     printf("best move: [%d|%d] %d\n", last_best.play.left, last_best.play.right, best.type);
     return last_best;
 }
+#endif
