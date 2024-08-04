@@ -200,12 +200,13 @@
       function alloc_c_int() {
         return Module._alloc_int();
       }
-      const LEFT = 0;
-      const RIGHT = 1;
-      const PERFECT_PICK = 2;
-      const IMPERFECT_PICK = 3;
-      const PASS = 4;
       function play() {
+        Module._init_fact();
+        const LEFT = Module._get_LEFT();
+        const RIGHT = Module._get_RIGHT();
+        const PERFECT_PICK = Module._get_PERFECT_PICK();
+        const IMPERFECT_PICK = Module._get_IMPERFECT_PICK();
+        const PASS = Module._get_PASS();
         const numberOfPlayers = Module._get_number_of_players();
         const pips = Module._get_pips();
         const currentPlayer = Module._get_current_player();
@@ -428,17 +429,17 @@
               break;
             }
             case IMPERFECT_PICK: {
-              if (deref_c_int(cantPassPtr) || !boneyard_is_pickable(hands)) {
+              if (deref_c_int(cantPassPtr) || !Module._boneyard_is_pickable(hands)) {
                 window.alert("invalid move");
                 break;
               }
               let amount = parseInt(window.prompt("Give amount to pick"));
               if (
                 amount > 0 &&
-                amount <= Module._get_hand_size(numberOfPlayers)
+                amount <= Module._get_hand_size(game, numberOfPlayers) // the player associated with the count of players is actually the boneyard.
               ) {
                 Module._populate_imperfect_picking_move(move, amount);
-                Module._perfect_pick_by_pointer(game, move);
+                Module._imperfect_pick_by_pointer(game, move);
               } else window.alert("invalid move");
               break;
             }
@@ -451,39 +452,40 @@
               break;
             }
             case -1: {
-              /*// AI move, don't know if i should enumerate in enum Move.
-            if(n == 0){
-                Module.print("no moves to choose AI move from");
+              // AI move, don't know if i should enumerate in enum Move.
+              if (deref_c_int(numberOfPlayingMovesPtr) === 0) {
+                window.alert("no moves to choose AI move from");
                 break;
-            }
-            printf("give ai mode (pessimist = %d, expect = %d): ", PESSIMIST, EXPECT);
-            scanf("%d", &ai_mode);
-            printf("skip exploring picking positions?: ");
-            scanf("%d", &skip);
-            printf("give depth of search (0 is iterative deepening (windows only), negative is infinite): ");
-            scanf("%d", &depth);
-            switch(ai_mode){
-            case PESSIMIST:
-                ai_function = minimax;
+              }
+              let depth = parseInt(
+                window.prompt(
+                  "give depth of search (negative is infinite, 0 isn't valid): "
+                )
+              );
+              if (depth === 0) {
+                window.alert("depth can't be 0!");
                 break;
-            case EXPECT:
-                ai_function = expectiminimax;
-                break;
-            }
-            if(depth != 0) move = best_move(g, moves, NULL, n, depth, skip, NULL, ai_function);
-            else move = iterative_deepening(g, moves, n, skip, ai_function);
-            if(depth == 0){
-                printf("iterative deepening is only available in windows\n");
-                break;
-            }
-            move = best_move(g, moves, NULL, n, depth, skip, NULL, ai_function);
+              }
+              Module._populate_move_by_ai(
+                game,
+                move,
+                playingMovesArrPtr,
+                deref_c_int(numberOfPlayingMovesPtr),
+                depth
+              );
 
-            printf("play the move?: ");
-            scanf("%d", &ai_play);
-            printf("\n");
-            if(ai_play){
-                play_move(g, move);
-            }*/
+              let playAiMove = parseInt(
+                window.prompt(
+                  `play [${Module._get_left_of_move(
+                    move
+                  )}|${Module._get_right_of_move(move)}] on the ${
+                    Module._get_type_of_move(move) === LEFT ? "left" : "right"
+                  }?: `
+                )
+              );
+              if (playAiMove) {
+                Module._play_move_by_pointer(game, move);
+              }
             }
           }
         }

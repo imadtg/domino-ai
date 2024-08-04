@@ -98,4 +98,48 @@ void populate_imperfect_picking_move(Move *move, int amount){
     move->imperfect_pick.count = amount;
 }
 
+void populate_move_by_ai(Game *game, Move *move, Move moves[], int n, int depth){
+    printf("DEBUGGING PRINTS:\n");
+    print_game(game);
+    print_playing_moves(moves, n);
+    printf("depth: %d, movecount: %d\n", depth, n);
+    printf("move pointer: %p\n", move);
+    Move best = best_move(game, moves, NULL, n, depth, 1, NULL, expectiminimax);
+    printf("[%d|%d] %d\n", best.play.left, best.play.right, best.type);
+    *move = best;
+    printf("END OF DEBUGGING PRINTS.\n");
+}
+
+int get_left_of_move(Move *move){
+    return move->play.left;
+}
+
+int get_right_of_move(Move *move){
+    return move->play.right;
+}
+
+int get_type_of_move(Move *move){
+    return move->type;
+}
+
+enum Type get_LEFT(){
+    return LEFT;
+}
+
+enum Type get_RIGHT(){
+    return RIGHT;
+}
+
+enum Type get_PERFECT_PICK(){
+    return PERFECT_PICK;
+}
+
+enum Type get_IMPERFECT_PICK(){
+    return IMPERFECT_PICK;
+}
+
+enum Type get_PASS(){
+    return PASS;
+}
+
 #endif
