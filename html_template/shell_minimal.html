@@ -198,7 +198,7 @@
       }
 
       function alloc_c_int() {
-        return Module.alloc_int;
+        return Module._alloc_int();
       }
       const LEFT = 0;
       const RIGHT = 1;
@@ -243,10 +243,12 @@
         range(pips).forEach((left) =>
           range(left, pips).forEach((right) => {
             if (currentPlayerOwns[left][right]) {
-              console.log(`Collapsing [${left}|${right}] onto ${currentPlayer}`)
+              console.log(
+                `Collapsing [${left}|${right}] onto ${currentPlayer}`
+              );
               Module._collapse_piece(currentPlayer, hands, left, right);
             } else {
-              console.log(`Absenting [${left}|${right}] from ${currentPlayer}`)
+              console.log(`Absenting [${left}|${right}] from ${currentPlayer}`);
               Module._absent_piece(currentPlayer, hands, left, right);
             }
           })
@@ -265,12 +267,13 @@
         const numberOfPlayablePickingMovesPtr = alloc_c_int();
         const playablePickingMovesArrPtr = Module._alloc_max_move_arr();
 
-        const Move = Module._alloc_move();
+        const move = Module._alloc_move();
 
         while (!Module._over(game)) {
           let turn = Module._get_turn(game);
           Module._print_game(game);
           Module._get_playing_moves(
+            // what the hecl is happening here??
             game,
             playingMovesArrPtr,
             numberOfPlayingMovesPtr,
@@ -297,18 +300,18 @@
           );
           Module._print_picking_moves(
             pickingMovesArrPtr,
-            numberOfPickingMovesPtr
+            deref_c_int(numberOfPickingMovesPtr)
           );
           Module._print_picking_moves(
             playablePickingMovesArrPtr,
-            numberOfPlayablePickingMovesPtr
+            deref_c_int(numberOfPlayablePickingMovesPtr)
           );
           Module.print("pass prob = ", passProbability);
           let unplayablePickProbability =
             Module._pick_unplayable_domino_probability_from_moves(
               game,
               playablePickingMovesArrPtr,
-              numberOfPlayablePickingMovesPtr
+              deref_c_int(numberOfPlayablePickingMovesPtr)
             ); // this is a conditional probability and assumes player will pick
           Module.print("unplayable pick prob = ", unplayablePickProbability);
           if (deref_c_int(cantPassPtr)) {
@@ -321,7 +324,7 @@
                 Module._hand_is_liquid(turn, hands)
               ) {
                 if (Module._is_passing(game, numberOfPlayers)) {
-                  Module._pick_all_of_boneyard(game);
+                  Module._pick_all_boneyard(game);
                   continue;
                 } else if (Module._get_hand_size(game, numberOfPlayers) === 1) {
                   Module._perfect_pick_by_pointer(
@@ -388,7 +391,7 @@
                 );
                 Module._play_move_by_pointer(game, move);
               } else {
-                Module.print("invalid move");
+                window.alert("invalid move");
               }
               break;
             }
@@ -397,7 +400,7 @@
                 deref_c_int(cantPassPtr) ||
                 !Module._boneyard_is_pickable(hands)
               ) {
-                Module.print("invalid move");
+                window.alert("invalid move");
                 break;
               }
               let leftPip = parseInt(
@@ -421,12 +424,12 @@
                   rightPip
                 );
                 Module._perfect_pick_by_pointer(game, move);
-              } else Module.print("invalid move");
+              } else window.alert("invalid move");
               break;
             }
             case IMPERFECT_PICK: {
               if (deref_c_int(cantPassPtr) || !boneyard_is_pickable(hands)) {
-                Module.print("invalid move");
+                window.alert("invalid move");
                 break;
               }
               let amount = parseInt(window.prompt("Give amount to pick"));
@@ -436,12 +439,12 @@
               ) {
                 Module._populate_imperfect_picking_move(move, amount);
                 Module._perfect_pick_by_pointer(game, move);
-              } else Module.print("invalid move");
+              } else window.alert("invalid move");
               break;
             }
             case PASS: {
               if (deref_c_int(cantPassPtr)) {
-                Module.print("invalid move");
+                window.alert("invalid move");
                 break;
               }
               Module._pass(game);
