@@ -12,15 +12,18 @@ LDFLAGS=-lm -mconsole --shell-file html_template/shell_minimal.html -sNO_EXIT_RU
 SOURCES=$(wildcard *.c)
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=build/index.html  # Name your executable
+EXEC_DIR=$(dir $(EXECUTABLE))
 
 .PHONY: all clean
 
 all: $(EXECUTABLE)
 
-$(EXECUTABLE): $(OBJECTS) html_template/shell_minimal.html
-# HACK: the following is because build/ is gitignore'd and the makefile was failing on fresh clones, change this when changing EXECUTABLE
-	mkdir build
+$(EXECUTABLE): $(OBJECTS) html_template/shell_minimal.html | $(EXEC_DIR)
 	$(CC) $(OBJECTS) $(LDFLAGS) -o $@
+
+$(EXEC_DIR):
+# HACK: the following wont work for nested directories, i dont expect i will be doing that anytime soon since making that cross platform is a pain
+	mkdir $@
 
 %.o: %.c Makefile
 	$(CC) $(CFLAGS) $< -o $@
