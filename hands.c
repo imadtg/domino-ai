@@ -1,5 +1,12 @@
 #include "hands.h"
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten/emscripten.h>
+#define KEEPALIVE EMSCRIPTEN_KEEPALIVE
+#else
+#define KEEPALIVE
+#endif
+
 int calc_solid_weight(int player, Hands *hands){
     int w = 0;
     for(int i = 0; i < PIPS; i++){
@@ -148,6 +155,7 @@ void and_ownership(int value, Hands *hands, int i, int j){
     hands->ownership[j][i] &= value;
 }
 
+KEEPALIVE
 int possible_possession(int player, Hands *hands, int i, int j){
     return hands->ownership[i][j] & (1 << player);
 }
@@ -171,10 +179,12 @@ int sole_owner(Hands *hands, int i, int j){
     return __builtin_ctz(hands->ownership[i][j]);
 }
 
+KEEPALIVE
 int hand_is_solid(int player, Hands *hands){
     return hands->solid_groups[player].size == hands->hand_sizes[player];
 }
 
+KEEPALIVE
 int hand_is_liquid(int player, Hands *hands){
     return hands->solid_groups[player].size == 0;
 }
@@ -183,6 +193,7 @@ int hand_is_empty(int player, Hands *hands){
     return hands->hand_sizes[player] == 0;
 }
 
+KEEPALIVE
 int boneyard_is_pickable(Hands *hands){
 #if BLOCK
     return 0;
@@ -205,6 +216,7 @@ void set_sole_owner_pick(int player, Hands *hands, int i, int j){ // needs not b
     set_ownership((1 << player), hands, i, j);
 }
 
+KEEPALIVE
 void collapse_piece(int player, Hands *hands, int i, int j){ // collapse piece to the player
     if(certain(hands, i, j) || !possible_possession(player, hands, i, j))
         return;
@@ -216,6 +228,7 @@ void collapse_piece(int player, Hands *hands, int i, int j){ // collapse piece t
     set_ownership((1 << player), hands, i, j);
 }
 
+KEEPALIVE
 void absent_piece(int player, Hands *hands, int i, int j){ // piece is not in the player's hand
     if(!possible_possession(player, hands, i, j) || certain(hands, i, j))
         return;
@@ -317,6 +330,7 @@ int collapse_hand(int player, Hands *hands){
     return 0;
 }
 
+KEEPALIVE
 void emit_collapse(Hands *hands){
     for(int p = 0; p <= NP; p++){
         cascade_collapse(p, hands);
@@ -366,6 +380,7 @@ void print_hands(Hands *hands){
     }
 }
 
+KEEPALIVE
 void get_hand_sizes(Hands *hands) {
     // TODO: allow silent games
     for(int i = 0; i < NP; i++){

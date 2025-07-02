@@ -1,5 +1,11 @@
 #include "minimax.h"
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten/emscripten.h>
+#define KEEPALIVE EMSCRIPTEN_KEEPALIVE
+#else
+#define KEEPALIVE
+#endif
 
 #ifdef _WIN32
 volatile int FALLBACK = 0;
@@ -26,6 +32,7 @@ float min(float x, float y){
     return y;
 }
 
+KEEPALIVE
 float endgame_evaluation(Game *g){
     int weights[NP] = {0};
     for(int i = 0; i < NP; i++) {
