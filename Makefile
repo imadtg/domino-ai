@@ -11,7 +11,7 @@ CFLAGS=-c -Wall -g
 LDFLAGS=-lm -mconsole --shell-file html_template/shell_minimal.html -sNO_EXIT_RUNTIME -sEXPORTED_RUNTIME_METHODS=ccall,cwrap -sNO_INVOKE_RUN -sASSERTIONS -sEXPORT_ALL -sLINKABLE -g -sERROR_ON_WASM_CHANGES_AFTER_LINK -sWASM_BIGINT
 SOURCES=$(wildcard *.c)
 OBJECTS=$(SOURCES:.c=.o)
-EXECUTABLE=build/index.html  # Name your executable
+EXECUTABLE=build/domino-c.html  # Name your executable
 EXEC_DIR=$(dir $(EXECUTABLE))
 
 .PHONY: all clean
