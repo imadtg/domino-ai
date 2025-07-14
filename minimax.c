@@ -7,9 +7,29 @@
 #define KEEPALIVE
 #endif
 
-#ifdef _WIN32
 volatile int FALLBACK = 0;
 
+KEEPALIVE
+volatile int* get_fallback_ptr(){
+    return &FALLBACK;
+}
+
+KEEPALIVE
+int get_fallback(){
+    return FALLBACK;
+}
+
+KEEPALIVE
+void set_fallback(){
+    FALLBACK = 1;
+}
+
+KEEPALIVE
+void reset_fallback(){
+    FALLBACK = 0;
+}
+
+#ifdef _WIN32
 WINBOOL interrupt_search(DWORD ctrl_type){
     if (ctrl_type == CTRL_C_EVENT) {
         FALLBACK = 1;
@@ -125,10 +145,8 @@ void process_absence(Game *g, Hands *anchor, float *pass_score, float *prob, int
 }
 
 float minimax(Game *g, int depth, int skip, int *nodes){
-    #ifdef _WIN32
     if(FALLBACK)
         return 0;
-    #endif
     (*nodes)++;
     if(over(g))
         return endgame_evaluation(g);
@@ -171,10 +189,8 @@ float expected_score_from_heap(Game *g, Heap *h, int liquid_size, int collapsing
 }
 
 float expectiminimax(Game *g, int depth, int skip, int *nodes){
-    #ifdef _WIN32
     if(FALLBACK)
         return 0;
-    #endif
     (*nodes)++;
     if(over(g))
         return endgame_evaluation(g);
