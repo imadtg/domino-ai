@@ -60,6 +60,16 @@ int deref_int(int *ptr){
     return *ptr;
 }
 
+KEEPALIVE 
+float *alloc_float(){
+    return malloc(sizeof(float));
+}
+
+KEEPALIVE
+float deref_float(float *ptr){
+    return *ptr;
+}
+
 KEEPALIVE
 Move *alloc_max_move_arr(){
     return malloc(sizeof(Move) * DCOUNT);
