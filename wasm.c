@@ -134,7 +134,7 @@ void populate_move_by_ai(Game *game, Move *move, Move moves[], int n, int depth,
     Move best = best_move(game, moves, scores, n, depth, 1, nodes, expectiminimax);
     for(int i = 0; i < n; i++){
         if(best.play.left == moves[i].play.left && best.play.right == moves[i].play.right && best.type == moves[i].type){
-            printf('best move: ');
+            printf("best move: ");
             *score = scores[i];
         }
         printf("score of move [%d|%d] %d: %f\n", moves[i].play.left, moves[i].play.right, moves[i].type, scores[i]);
