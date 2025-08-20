@@ -1,4 +1,6 @@
 #include "minimax.h"
+#include <stdatomic.h>
+#include <stdint.h>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
@@ -7,12 +9,32 @@
 #define KEEPALIVE
 #endif
 
-#ifdef _WIN32
-volatile int FALLBACK = 0;
+volatile _Atomic int32_t FALLBACK = 0;
 
+KEEPALIVE
+volatile uintptr_t get_fallback_ptr(){
+    return (uintptr_t)&FALLBACK;
+}
+
+KEEPALIVE
+int get_fallback(){
+    return atomic_load_explicit(&FALLBACK, memory_order_seq_cst);;
+}
+
+KEEPALIVE
+void set_fallback(){
+    atomic_store_explicit(&FALLBACK, 1, memory_order_seq_cst);
+}
+
+KEEPALIVE
+void reset_fallback(){
+    atomic_store_explicit(&FALLBACK, 0, memory_order_seq_cst);
+}
+
+#ifdef _WIN32
 WINBOOL interrupt_search(DWORD ctrl_type){
     if (ctrl_type == CTRL_C_EVENT) {
-        FALLBACK = 1;
+        set_fallback();
         SetConsoleCtrlHandler((PHANDLER_ROUTINE)interrupt_search, FALSE);
         return TRUE;
     }
@@ -125,10 +147,8 @@ void process_absence(Game *g, Hands *anchor, float *pass_score, float *prob, int
 }
 
 float minimax(Game *g, int depth, int skip, int *nodes){
-    #ifdef _WIN32
-    if(FALLBACK)
+    if(get_fallback())
         return 0;
-    #endif
     (*nodes)++;
     if(over(g))
         return endgame_evaluation(g);
@@ -171,10 +191,8 @@ float expected_score_from_heap(Game *g, Heap *h, int liquid_size, int collapsing
 }
 
 float expectiminimax(Game *g, int depth, int skip, int *nodes){
-    #ifdef _WIN32
-    if(FALLBACK)
+    if(get_fallback())
         return 0;
-    #endif
     (*nodes)++;
     if(over(g))
         return endgame_evaluation(g);
@@ -257,7 +275,7 @@ Move iterative_deepening(Game *g, Move moves[], int n, int skip, float (*ai_func
     int depth = 1, nodes = 0, prev_nodes = 0;
     float scores[n], last_scores[n];
     Move best = best_move(g, moves, scores, n, depth, skip, &nodes, ai_function), last_best;
-    while(!FALLBACK && prev_nodes < nodes){
+    while(!get_fallback() && prev_nodes < nodes){
         last_best = best;
         prev_nodes = nodes;
         for(int i = 0; i < n; i++)
@@ -269,7 +287,7 @@ Move iterative_deepening(Game *g, Move moves[], int n, int skip, float (*ai_func
         nodes = 0;
         best = best_move(g, moves, scores, n, depth, skip, &nodes, ai_function);
     }
-    FALLBACK = 0;
+    reset_fallback();
     for(int i = 0; i < n; i++)
         printf("score of move [%d|%d] %d: %f\n", moves[i].play.left, moves[i].play.right, moves[i].type, last_scores[i]);
     printf("best move: [%d|%d] %d\n", last_best.play.left, last_best.play.right, best.type);

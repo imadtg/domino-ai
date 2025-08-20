@@ -60,6 +60,16 @@ int deref_int(int *ptr){
     return *ptr;
 }
 
+KEEPALIVE 
+float *alloc_float(){
+    return malloc(sizeof(float));
+}
+
+KEEPALIVE
+float deref_float(float *ptr){
+    return *ptr;
+}
+
 KEEPALIVE
 Move *alloc_max_move_arr(){
     return malloc(sizeof(Move) * DCOUNT);
@@ -122,14 +132,24 @@ void populate_imperfect_picking_move(Move *move, int amount){
 }
 
 KEEPALIVE
-void populate_move_by_ai(Game *game, Move *move, Move moves[], int n, int depth){
+void populate_move_by_ai(Game *game, Move *move, Move moves[], int n, int depth, float *score, int *nodes){
     printf("DEBUGGING PRINTS:\n");
     print_game(game);
     print_playing_moves(moves, n);
     printf("depth: %d, movecount: %d\n", depth, n);
     printf("move pointer: %p\n", move);
-    Move best = best_move(game, moves, NULL, n, depth, 1, NULL, expectiminimax);
-    printf("[%d|%d] %d\n", best.play.left, best.play.right, best.type);
+    float scores[n];
+    *nodes = 0;
+    // TODO: delegate choice of AI function and the skip flag to this wrapper's parameters instead of hardcoding them...
+    Move best = best_move(game, moves, scores, n, depth, 1, nodes, expectiminimax);
+    for(int i = 0; i < n; i++){
+        if(best.play.left == moves[i].play.left && best.play.right == moves[i].play.right && best.type == moves[i].type){
+            printf("best move: ");
+            *score = scores[i];
+        }
+        printf("score of move [%d|%d] %d: %f\n", moves[i].play.left, moves[i].play.right, moves[i].type, scores[i]);
+    }
+    printf("best move found: [%d|%d] %d: %f\n", best.play.left, best.play.right, best.type, *score);
     *move = best;
     printf("END OF DEBUGGING PRINTS.\n");
 }
