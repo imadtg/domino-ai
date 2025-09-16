@@ -8,7 +8,7 @@
 CC=gcc
 RM=rm -f
 CFLAGS=-c -Wall -O3
-LDFLAGS=-lm -mconsole
+LDFLAGS=-lm
 SOURCES=$(wildcard *.c)
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=dominoai  # Name your executable
