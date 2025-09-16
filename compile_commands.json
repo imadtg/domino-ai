@@ -1,0 +1,128 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-c",
+      "-Wall",
+      "-O3",
+      "-o",
+      "domino.o",
+      "domino.c"
+    ],
+    "directory": "/home/pc/Desktop/domino-ai",
+    "file": "/home/pc/Desktop/domino-ai/domino.c",
+    "output": "/home/pc/Desktop/domino-ai/domino.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-c",
+      "-Wall",
+      "-O3",
+      "-o",
+      "heap.o",
+      "heap.c"
+    ],
+    "directory": "/home/pc/Desktop/domino-ai",
+    "file": "/home/pc/Desktop/domino-ai/heap.c",
+    "output": "/home/pc/Desktop/domino-ai/heap.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-c",
+      "-Wall",
+      "-O3",
+      "-o",
+      "hands.o",
+      "hands.c"
+    ],
+    "directory": "/home/pc/Desktop/domino-ai",
+    "file": "/home/pc/Desktop/domino-ai/hands.c",
+    "output": "/home/pc/Desktop/domino-ai/hands.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-c",
+      "-Wall",
+      "-O3",
+      "-o",
+      "main.o",
+      "main.c"
+    ],
+    "directory": "/home/pc/Desktop/domino-ai",
+    "file": "/home/pc/Desktop/domino-ai/main.c",
+    "output": "/home/pc/Desktop/domino-ai/main.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-c",
+      "-Wall",
+      "-O3",
+      "-o",
+      "game.o",
+      "game.c"
+    ],
+    "directory": "/home/pc/Desktop/domino-ai",
+    "file": "/home/pc/Desktop/domino-ai/game.c",
+    "output": "/home/pc/Desktop/domino-ai/game.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-c",
+      "-Wall",
+      "-O3",
+      "-o",
+      "block.o",
+      "block.c"
+    ],
+    "directory": "/home/pc/Desktop/domino-ai",
+    "file": "/home/pc/Desktop/domino-ai/block.c",
+    "output": "/home/pc/Desktop/domino-ai/block.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-c",
+      "-Wall",
+      "-O3",
+      "-o",
+      "minimax.o",
+      "minimax.c"
+    ],
+    "directory": "/home/pc/Desktop/domino-ai",
+    "file": "/home/pc/Desktop/domino-ai/minimax.c",
+    "output": "/home/pc/Desktop/domino-ai/minimax.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-c",
+      "-Wall",
+      "-O3",
+      "-o",
+      "move.o",
+      "move.c"
+    ],
+    "directory": "/home/pc/Desktop/domino-ai",
+    "file": "/home/pc/Desktop/domino-ai/move.c",
+    "output": "/home/pc/Desktop/domino-ai/move.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-c",
+      "-Wall",
+      "-O3",
+      "-o",
+      "snake.o",
+      "snake.c"
+    ],
+    "directory": "/home/pc/Desktop/domino-ai",
+    "file": "/home/pc/Desktop/domino-ai/snake.c",
+    "output": "/home/pc/Desktop/domino-ai/snake.o"
+  }
+]
