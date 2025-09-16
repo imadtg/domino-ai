@@ -11,7 +11,7 @@ CFLAGS=-c -Wall -O3
 LDFLAGS=-lm -mconsole
 SOURCES=$(wildcard *.c)
 OBJECTS=$(SOURCES:.c=.o)
-EXECUTABLE=dominoai  # Name your executable
+EXECUTABLE=out/dominoai  # Name your executable
 
 .PHONY: all clean
 
