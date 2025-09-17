@@ -8,10 +8,10 @@
 CC=gcc
 ifeq ($(OS), Windows_NT)
 RM=del /F /Q
-EXECUTABLE=out\dominoai.exe  # Name your executable
+EXECUTABLE=out\dominoai.exe
 else
 RM=rm -f
-EXECUTABLE=out/dominoai.out  # Name your executable
+EXECUTABLE=out/dominoai.out
 endif
 CFLAGS=-c -Wall -O3
 LDFLAGS=-lm
