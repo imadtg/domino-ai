@@ -6,7 +6,11 @@
 #
 
 CC=gcc
+ifeq ($(OS), Windows_NT)
+RM=del /F /Q
+else
 RM=rm -f
+endif
 CFLAGS=-c -Wall -O3
 LDFLAGS=-lm
 SOURCES=$(wildcard *.c)
