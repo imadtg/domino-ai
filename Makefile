@@ -8,14 +8,15 @@
 CC=gcc
 ifeq ($(OS), Windows_NT)
 RM=del /F /Q
+EXECUTABLE=out/dominoai.exe  # Name your executable
 else
 RM=rm -f
+EXECUTABLE=out/dominoai.out  # Name your executable
 endif
 CFLAGS=-c -Wall -O3
 LDFLAGS=-lm
 SOURCES=$(wildcard *.c)
 OBJECTS=$(SOURCES:.c=.o)
-EXECUTABLE=out/dominoai  # Name your executable
 
 .PHONY: all clean
 
