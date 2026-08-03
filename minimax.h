@@ -13,7 +13,6 @@ enum Mode {PESSIMIST, EXPECT};
 
 
 #ifdef _WIN32
-extern volatile int FALLBACK;
 WINBOOL interrupt_search(DWORD ctrl_type);
 #endif
 float max(float x, float y);
