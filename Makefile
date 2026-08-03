@@ -4,13 +4,11 @@ NATIVE_CC ?= gcc
 WASM_CC ?= emcc
 
 ifeq ($(OS), Windows_NT)
-NATIVE_RM = del /F /Q
-WASM_RM = del /F /Q
+RM = del /F /Q
 NATIVE_EXECUTABLE = out\dominoai.exe
 WASM_CLEAN_EXECUTABLE = out\domino-c.html
 else
-NATIVE_RM = rm -f
-WASM_RM = rm -f
+RM = rm -f
 NATIVE_EXECUTABLE = out/dominoai.out
 WASM_CLEAN_EXECUTABLE = out/domino-c.html
 endif
@@ -51,7 +49,7 @@ $(WASM_EXECUTABLE): $(WASM_OBJECTS) html_template/shell_minimal.html
 clean: clean-native clean-wasm
 
 clean-native:
-	$(NATIVE_RM) $(NATIVE_OBJECTS) $(NATIVE_EXECUTABLE)
+	$(RM) $(NATIVE_OBJECTS) $(NATIVE_EXECUTABLE)
 
 clean-wasm:
-	$(WASM_RM) $(WASM_OBJECTS) $(WASM_CLEAN_EXECUTABLE)
+	$(RM) $(WASM_OBJECTS) $(WASM_CLEAN_EXECUTABLE)
