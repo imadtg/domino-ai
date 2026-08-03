@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := native
 
-NATIVE_CC ?= gcc
-WASM_CC ?= emcc
+NATIVE_CC = gcc
+WASM_CC = emcc
 
 ifeq ($(OS), Windows_NT)
 RM = del /F /Q
