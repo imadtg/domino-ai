@@ -28,7 +28,7 @@ WASM_OBJECTS = $(WASM_SOURCES:.c=.wasm.o)
 
 .PHONY: all native wasm clean clean-native clean-wasm
 
-all: native
+all: native wasm
 
 native: $(NATIVE_EXECUTABLE)
 
