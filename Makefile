@@ -13,7 +13,7 @@ NATIVE_EXECUTABLE = out/dominoai.out
 WASM_ARTIFACTS = out/domino-c.html out/domino-c.js out/domino-c.wasm
 endif
 
-WASM_EXECUTABLE = out/domino-c.html
+WASM_TARGET = out/domino-c.html
 
 NATIVE_CFLAGS = -c -Wall -O3
 NATIVE_LDFLAGS = -lm
@@ -32,12 +32,12 @@ all: native wasm
 
 native: $(NATIVE_EXECUTABLE)
 
-wasm: $(WASM_EXECUTABLE)
+wasm: $(WASM_TARGET)
 
 $(NATIVE_EXECUTABLE): $(NATIVE_OBJECTS)
 	$(NATIVE_CC) $(NATIVE_OBJECTS) $(NATIVE_LDFLAGS) -o $@
 
-$(WASM_EXECUTABLE): $(WASM_OBJECTS) html_template/shell_minimal.html
+$(WASM_TARGET): $(WASM_OBJECTS) html_template/shell_minimal.html
 	$(WASM_CC) $(WASM_OBJECTS) $(WASM_LDFLAGS) -o $@
 
 %.native.o: %.c Makefile
