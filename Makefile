@@ -6,11 +6,11 @@ WASM_CC = emcc
 ifeq ($(OS), Windows_NT)
 RM = del /F /Q
 NATIVE_EXECUTABLE = out\dominoai.exe
-WASM_CLEAN_ARTIFACTS = out\domino-c.html out\domino-c.js out\domino-c.wasm
+WASM_ARTIFACTS = out\domino-c.html out\domino-c.js out\domino-c.wasm
 else
 RM = rm -f
 NATIVE_EXECUTABLE = out/dominoai.out
-WASM_CLEAN_ARTIFACTS = out/domino-c.html out/domino-c.js out/domino-c.wasm
+WASM_ARTIFACTS = out/domino-c.html out/domino-c.js out/domino-c.wasm
 endif
 
 WASM_EXECUTABLE = out/domino-c.html
@@ -52,4 +52,4 @@ clean-native:
 	$(RM) $(NATIVE_OBJECTS) $(NATIVE_EXECUTABLE)
 
 clean-wasm:
-	$(RM) $(WASM_OBJECTS) $(WASM_CLEAN_ARTIFACTS)
+	$(RM) $(WASM_OBJECTS) $(WASM_ARTIFACTS)
