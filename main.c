@@ -26,7 +26,6 @@ void start(){
         get_playable_perfect_picking_moves(g, playable_picking_moves, &nplypck);
         get_perfect_picking_moves(g, picking_moves, &npck);
         pass_prob = pass_probability_from_num_moves(g, n);
-        pass_probability_from_num_moves(g, n);
         print_picking_moves(picking_moves, npck);
         print_picking_moves(playable_picking_moves, nplypck);
         printf("pass prob = %f\n", pass_prob);

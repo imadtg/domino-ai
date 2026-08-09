@@ -1,7 +1,15 @@
 #include "game.h"
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten/emscripten.h>
+#define KEEPALIVE EMSCRIPTEN_KEEPALIVE
+#else
+#define KEEPALIVE
+#endif
+
 unsigned long long FACTORIAL[DCOUNT];
 
+KEEPALIVE
 void init_fact(){
     FACTORIAL[0] = 1;
     for(int i = 1; i < DCOUNT; i++){
@@ -10,6 +18,7 @@ void init_fact(){
 }
 
 // initialize a game
+KEEPALIVE
 void init_game(Game *g) {
     init_blocks(g->block_set);
     g->snake.head = NULL;
@@ -18,6 +27,7 @@ void init_game(Game *g) {
     init_hands(&g->hands);
 }
 
+KEEPALIVE
 int playable_move(Snake *s, enum Type type, int left, int right) {
     if(s->head == NULL)
         return 1;
@@ -51,6 +61,7 @@ int playable_domino(Snake *s, int left, int right) {
             || right == s->head->domino.right || right == s->tail->domino.left;
 }
 
+KEEPALIVE
 int is_passing(Game *g, int player){ // test whether a player will pass if given the turn for certain
     int left = g->snake.tail->domino.left;
     int right = g->snake.head->domino.right;
@@ -61,6 +72,7 @@ int is_passing(Game *g, int player){ // test whether a player will pass if given
     return 1;
 }
 
+KEEPALIVE
 void print_game(Game *g){
     printf("-------------------------------------------------------------\n");
     // print the hands then the snake.
@@ -71,6 +83,7 @@ void print_game(Game *g){
     printf("Pass Counter: %d\n", g->pass_counter);
 }
 
+KEEPALIVE
 void get_playing_moves(Game *g, Move moves[MAX_NUM_PLY_MOVE], int *n, int *cant_pass){
     *n = 0;
     *cant_pass = 0;
@@ -112,6 +125,7 @@ void get_playing_moves(Game *g, Move moves[MAX_NUM_PLY_MOVE], int *n, int *cant_
     }
 }
 
+KEEPALIVE
 void get_perfect_picking_moves(Game *g, Move moves[], int *n){
     *n = 0;
     if(g->hands.hand_sizes[NP] == 0)
@@ -134,6 +148,7 @@ void deb(Game *g){
     get_playable_perfect_picking_moves(g, perf, &n);
 }
 
+KEEPALIVE
 void get_playable_perfect_picking_moves(Game *g, Move moves[], int *n){
     *n = 0;
     if(g->hands.hand_sizes[NP] == 0)
@@ -150,6 +165,7 @@ void get_playable_perfect_picking_moves(Game *g, Move moves[], int *n){
     }
 }
 
+KEEPALIVE
 float pick_unplayable_domino_probability_from_moves(Game *g, Move play_perf[], int nplayperf){
     int nplaysolid = 0, nplayliquid = 0;
     for(int i = 0; i < nplayperf; i++){
@@ -171,6 +187,7 @@ float pick_unplayable_domino_probability(Game *g, int n_solid, int n_liquid){ //
     return liquid_prob + solid_prob;
 }
 
+KEEPALIVE
 float pass_probability_from_num_moves(Game *g, int n){
     if(g->snake.head == NULL)
         return 0.0f;
@@ -253,6 +270,7 @@ void pick_liquid_update(Game *g){
     unabsent(g);
 }
 
+KEEPALIVE
 void pass(Game *g){
     absent(g);
     emit_collapse(&g->hands);
@@ -291,6 +309,7 @@ void undo_imperfect_pick(Game *g, Hands *prev){
     g->hands = *prev;
 }
 
+KEEPALIVE
 int over(Game *g){
     if(g->pass_counter == NP)
         return 1;
