@@ -6,19 +6,21 @@ WASM_CC = emcc
 ifeq ($(OS), Windows_NT)
 RM = del /F /Q
 NATIVE_EXECUTABLE = out\dominoai.exe
-WASM_ARTIFACTS = out\domino-c.html out\domino-c.js out\domino-c.wasm
+WASM_ARTIFACTS = dist\domino-c.mjs dist\domino-c.wasm
+CREATE_DIST = if not exist dist mkdir dist
 else
 RM = rm -f
 NATIVE_EXECUTABLE = out/dominoai.out
-WASM_ARTIFACTS = out/domino-c.html out/domino-c.js out/domino-c.wasm
+WASM_ARTIFACTS = dist/domino-c.mjs dist/domino-c.wasm
+CREATE_DIST = mkdir -p dist
 endif
 
-WASM_TARGET = out/domino-c.html
+WASM_TARGET = dist/domino-c.mjs
 
 NATIVE_CFLAGS = -c -Wall -O3
 NATIVE_LDFLAGS = -lm
 WASM_CFLAGS = -c -Wall -g -sWASM_WORKERS
-WASM_LDFLAGS = -lm -mconsole --shell-file html_template/shell_minimal.html -sNO_EXIT_RUNTIME -sEXPORTED_RUNTIME_METHODS=ccall,cwrap,wasmMemory,getValue,setValue -sNO_INVOKE_RUN -sASSERTIONS -sEXPORT_ALL -g -sERROR_ON_WASM_CHANGES_AFTER_LINK -sWASM_BIGINT -sENVIRONMENT=web,webview,worker -sEXPORT_NAME="createModule" -sMODULARIZE -sWASM_WORKERS
+WASM_LDFLAGS = -lm -sNO_EXIT_RUNTIME -sEXPORTED_RUNTIME_METHODS=ccall,cwrap,wasmMemory,getValue,setValue -sNO_INVOKE_RUN -sASSERTIONS -sEXPORT_ALL -g -sERROR_ON_WASM_CHANGES_AFTER_LINK -sWASM_BIGINT -sENVIRONMENT=web,webview,worker -sEXPORT_NAME="createModule" -sMODULARIZE -sEXPORT_ES6 -sWASM_WORKERS
 
 SOURCES = $(wildcard *.c)
 NATIVE_SOURCES = $(filter-out wasm.c,$(SOURCES))
@@ -37,8 +39,11 @@ wasm: $(WASM_TARGET)
 $(NATIVE_EXECUTABLE): $(NATIVE_OBJECTS)
 	$(NATIVE_CC) $(NATIVE_OBJECTS) $(NATIVE_LDFLAGS) -o $@
 
-$(WASM_TARGET): $(WASM_OBJECTS) html_template/shell_minimal.html
+$(WASM_TARGET): $(WASM_OBJECTS) | dist
 	$(WASM_CC) $(WASM_OBJECTS) $(WASM_LDFLAGS) -o $@
+
+dist:
+	$(CREATE_DIST)
 
 %.native.o: %.c Makefile
 	$(NATIVE_CC) $(NATIVE_CFLAGS) $< -o $@

@@ -1,3 +1,6 @@
 *.o
 compile_commands.json
 out/
+dist/
+node_modules/
+*.tgz
