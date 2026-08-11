@@ -1,3 +1,5 @@
+/// <reference types="emscripten" />
+
 export interface DominoModuleOptions {
   print?: (...args: string[]) => void;
   printErr?: (...args: string[]) => void;
