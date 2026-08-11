@@ -20,7 +20,7 @@
   "scripts": {
     "build": "make wasm",
     "clean": "make clean-wasm",
-    "prepack": "bun run build"
+    "prepack": "npm run build"
   },
   "repository": {
     "type": "git",
