@@ -1,0 +1,36 @@
+{
+  "name": "domino-ai",
+  "version": "0.1.0",
+  "description": "A WebAssembly build of the Domino AI engine",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.mjs",
+  "module": "./dist/index.mjs",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "index.d.ts",
+    "dist"
+  ],
+  "scripts": {
+    "build": "make wasm",
+    "clean": "make clean-wasm",
+    "prepack": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/imadtg/domino-ai.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@types/emscripten": "^1.40.1"
+  },
+  "sideEffects": false
+}
