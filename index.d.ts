@@ -5,8 +5,6 @@ export interface DominoModuleOptions {
   [key: string]: unknown;
 }
 
-export declare const wasmUrl: string;
-
 export interface DominoAiModule extends EmscriptenModule {
   wasmMemory: WebAssembly.Memory & { buffer: SharedArrayBuffer };
 
@@ -116,8 +114,6 @@ export interface DominoAiModule extends EmscriptenModule {
   ): number;
 }
 
-export declare function createModule(
+export default function createModule(
   options?: DominoModuleOptions,
 ): Promise<DominoAiModule>;
-
-export default createModule;

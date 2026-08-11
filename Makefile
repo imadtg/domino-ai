@@ -6,14 +6,14 @@ WASM_CC = emcc
 ifeq ($(OS), Windows_NT)
 RM = del /F /Q
 NATIVE_EXECUTABLE = out\dominoai.exe
-WASM_ARTIFACTS = dist\domino-c.mjs dist\domino-c.wasm
+WASM_ARTIFACTS = dist\index.mjs dist\index.wasm
 else
 RM = rm -f
 NATIVE_EXECUTABLE = out/dominoai.out
-WASM_ARTIFACTS = dist/domino-c.mjs dist/domino-c.wasm
+WASM_ARTIFACTS = dist/index.mjs dist/index.wasm
 endif
 
-WASM_TARGET = dist/domino-c.mjs
+WASM_TARGET = dist/index.mjs
 
 NATIVE_CFLAGS = -c -Wall -O3
 NATIVE_LDFLAGS = -lm
