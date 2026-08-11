@@ -107,7 +107,7 @@ export interface DominoAiModule extends EmscriptenModule {
     gamePtr: number,
     playingMovesArrPtr: number,
     numberOfPlayingMovesPtr: number,
-  ): void;
+  ): number;
   _pass_probability_from_num_moves(
     gamePtr: number,
     numberOfPlayingMoves: number,
