@@ -7,12 +7,10 @@ ifeq ($(OS), Windows_NT)
 RM = del /F /Q
 NATIVE_EXECUTABLE = out\dominoai.exe
 WASM_ARTIFACTS = dist\domino-c.mjs dist\domino-c.wasm
-CREATE_DIST = if not exist dist mkdir dist
 else
 RM = rm -f
 NATIVE_EXECUTABLE = out/dominoai.out
 WASM_ARTIFACTS = dist/domino-c.mjs dist/domino-c.wasm
-CREATE_DIST = mkdir -p dist
 endif
 
 WASM_TARGET = dist/domino-c.mjs
@@ -43,7 +41,7 @@ $(WASM_TARGET): $(WASM_OBJECTS) | dist
 	$(WASM_CC) $(WASM_OBJECTS) $(WASM_LDFLAGS) -o $@
 
 dist:
-	$(CREATE_DIST)
+	mkdir dist
 
 %.native.o: %.c Makefile
 	$(NATIVE_CC) $(NATIVE_CFLAGS) $< -o $@
